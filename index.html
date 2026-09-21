@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naija Ledger — Know Where Your Money Goes</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="onboarding-overlay" class="overlay hidden">
+    <div class="onboard-card">
+      <h1>Naija Ledger</h1>
+      <p class="tagline">Know Where Your Money Goes.</p>
+      <div id="onboard-steps"></div>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-icon">📒</span>
+      <div>
+        <h1>Naija Ledger</h1>
+        <p>Know Where Your Money Goes.</p>
+      </div>
+    </div>
+    <button id="global-add-btn" class="btn primary">+ Add Expense</button>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="home" class="tab active">Home</button>
+    <button data-tab="transactions" class="tab">Transactions</button>
+    <button data-tab="budget" class="tab">Budget</button>
+    <button data-tab="reports" class="tab">Reports</button>
+    <button data-tab="settings" class="tab">Profile</button>
+  </nav>
+
+  <main>
+    <!-- HOME -->
+    <section id="tab-home" class="tab-panel active">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Today's Spending</h3>
+          <p class="big" id="today-total">₦0</p>
+          <p class="muted" id="today-count">0 transactions</p>
+          <button class="btn link" data-goto="transactions">View today's transactions</button>
+        </div>
+        <div class="card">
+          <h3>Monthly Spending</h3>
+          <p class="big" id="month-total">₦0</p>
+          <p class="muted" id="month-budget-line">No monthly budget set</p>
+          <div class="progress"><div id="month-progress" class="progress-fill"></div></div>
+          <p class="muted" id="month-remaining"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Category Summary (This Month)</h3>
+        <div id="category-summary"></div>
+      </div>
+
+      <div class="card">
+        <div class="row-between">
+          <h3>Recent Transactions</h3>
+          <button class="btn link" data-goto="transactions">View all</button>
+        </div>
+        <div id="recent-list"></div>
+      </div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="tab-transactions" class="tab-panel">
+      <div class="card">
+        <h3>Transaction History</h3>
+        <div class="filters">
+          <input id="f-search" type="search" placeholder="Search description, category, location..." />
+          <select id="f-category"><option value="">All categories</option></select>
+          <select id="f-payment">
+            <option value="">All payment methods</option>
+            <option>Cash</option>
+            <option>Bank transfer</option>
+            <option>Debit card</option>
+            <option>POS</option>
+            <option>Mobile payment</option>
+            <option>Other</option>
+          </select>
+          <input id="f-from" type="date" title="From date" />
+          <input id="f-to" type="date" title="To date" />
+          <input id="f-min" type="number" min="0" placeholder="Min ₦" />
+          <input id="f-max" type="number" min="0" placeholder="Max ₦" />
+          <button id="f-clear" class="btn">Clear</button>
+        </div>
+        <div id="txn-list"></div>
+      </div>
+    </section>
+
+    <!-- BUDGET -->
+    <section id="tab-budget" class="tab-panel">
+      <div class="card">
+        <h3>Monthly Budget</h3>
+        <p class="big" id="budget-monthly-display">Not set</p>
+        <div class="progress"><div id="budget-monthly-progress" class="progress-fill"></div></div>
+        <p class="muted" id="budget-monthly-note"></p>
+        <div class="row">
+          <input id="monthly-budget-input" type="number" min="0" placeholder="e.g. 250000" />
+          <button id="save-monthly-budget" class="btn primary">Save</button>
+          <button id="clear-monthly-budget" class="btn">Remove</button>
+        </div>
+        <p id="budget-alert" class="alert hidden"></p>
+      </div>
+      <div class="card">
+        <h3>Category Budgets</h3>
+        <div id="category-budgets"></div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="tab-reports" class="tab-panel">
+      <div class="grid-2">
+        <div class="card"><h3>Today vs Yesterday</h3><div id="rep-today-yesterday"></div></div>
+        <div class="card"><h3>This Month vs Last Month</h3><div id="rep-month-compare"></div></div>
+      </div>
+      <div class="card"><h3>Top Categories (This Month)</h3><div id="rep-top-cats"></div></div>
+      <div class="card"><h3>Last 7 Days Pattern</h3><div id="rep-weekly"></div></div>
+      <div class="card"><h3>Category Breakdown (This Month)</h3><div id="rep-breakdown"></div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="tab-panel">
+      <div class="card">
+        <h3>User Profile</h3>
+        <label>Name <input id="set-name" type="text" placeholder="Your name" /></label>
+        <label>Profile type
+          <select id="set-profile">
+            <option>Personal</option>
+            <option>Student</option>
+            <option>Family</option>
+            <option>Business</option>
+            <option>Personal + Business</option>
+          </select>
+        </label>
+        <label>Currency <input id="set-currency" type="text" value="₦" maxlength="3" /></label>
+        <button id="save-profile" class="btn primary">Save Profile</button>
+      </div>
+      <div class="card">
+        <h3>Categories</h3>
+        <div id="settings-categories"></div>
+        <div class="row">
+          <input id="new-cat-name" type="text" placeholder="New category name" />
+          <input id="new-cat-icon" type="text" placeholder="Icon (e.g. 🛒)" maxlength="4" />
+          <button id="add-category" class="btn primary">Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Data / Export</h3>
+        <div class="row">
+          <button id="export-json" class="btn">Export JSON</button>
+          <button id="export-csv" class="btn">Export CSV</button>
+          <button id="reset-data" class="btn danger">Reset all data</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>About</h3>
+        <p class="muted">Naija Ledger MVP — record daily spending, understand monthly patterns, stay within budget. Data is stored locally in your browser (localStorage). No account needed.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Expense modal -->
+  <div id="expense-modal" class="overlay hidden">
+    <div class="modal">
+      <div class="row-between">
+        <h2 id="expense-modal-title">Add Expense</h2>
+        <button id="expense-close" class="btn">✕</button>
+      </div>
+      <div class="row">
+        <button id="mode-quick" class="btn mode active">Quick Expense</button>
+        <button id="mode-detailed" class="btn mode">Detailed Expense</button>
+      </div>
+      <input type="hidden" id="exp-id" />
+      <label>Amount (₦) * <input id="exp-amount" type="number" min="1" step="1" placeholder="e.g. 2500" required /></label>
+      <label>Category * <select id="exp-category"></select></label>
+      <label>Description <input id="exp-description" type="text" placeholder="e.g. Lunch" /></label>
+      <div id="detailed-fields">
+        <div class="grid-2">
+          <label>Date <input id="exp-date" type="date" /></label>
+          <label>Time <input id="exp-time" type="time" /></label>
+        </div>
+        <label>Payment method
+          <select id="exp-payment">
+            <option>Cash</option>
+            <option>Bank transfer</option>
+            <option>Debit card</option>
+            <option>POS</option>
+            <option>Mobile payment</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Location <input id="exp-location" type="text" placeholder="e.g. Ikeja, Lagos" /></label>
+        <label>Notes <textarea id="exp-notes" rows="2" placeholder="Optional notes"></textarea></label>
+      </div>
+      <div class="row">
+        <button id="expense-save" class="btn primary">Save Expense</button>
+        <button id="expense-delete" class="btn danger hidden">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <footer><p>Naija Ledger MVP • Every Naira Counts.</p></footer>
+  <script src="app.js"></script>
+</body>
+</html>
