@@ -148,3 +148,87 @@ footer { text-align: center; color: var(--muted); padding: 18px; font-size: 12px
   font-size: 13px;
 }
 .chip.selected { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* ---------- Extended palette (Phase 1 design system) ---------- */
+:root {
+  /* Brand accents */
+  --gold: #f2b705;
+  --teal: #009688;
+  --blue: #2980b9;
+  --purple: #8e44ad;
+  --orange: #e67e22;
+  --pink: #e84393;
+  --indigo: #3f51b5;
+  --slate: #34495e;
+
+  /* Per-category colors */
+  --cat-food: #e67e22;
+  --cat-transport: #2980b9;
+  --cat-comms: #8e44ad;
+  --cat-home: #e8a100;
+  --cat-personal: #e84393;
+  --cat-health: #e74c3c;
+  --cat-education: #3f51b5;
+  --cat-family: #009688;
+  --cat-financial: #0e7c3e;
+  --cat-business: #34495e;
+  --cat-other: #7f8c8d;
+
+  /* Soft tints for badges / chips */
+  --tint-food: #fdebd7;
+  --tint-transport: #d6eaf8;
+  --tint-comms: #e8daef;
+  --tint-home: #fef5d8;
+  --tint-personal: #fbddec;
+  --tint-health: #fadbd8;
+  --tint-education: #d9ddf7;
+  --tint-family: #d1f2ee;
+  --tint-financial: #d5f0e0;
+  --tint-business: #d6dbe1;
+  --tint-other: #eaecee;
+}
+
+/* Brand header: green gradient with gold underline accent */
+.app-header {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 60%, #12a150 100%);
+  border-bottom: 3px solid var(--gold);
+}
+
+/* Colored dot used beside category names */
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: baseline;
+}
+
+/* Tinted category badge */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge.food { background: var(--tint-food); color: #9c5200; }
+.badge.transport { background: var(--tint-transport); color: #1a5276; }
+.badge.comms { background: var(--tint-comms); color: #6c3483; }
+.badge.home { background: var(--tint-home); color: #7e5100; }
+.badge.personal { background: var(--tint-personal); color: #a93226; }
+.badge.health { background: var(--tint-health); color: #922b21; }
+.badge.education { background: var(--tint-education); color: #283593; }
+.badge.family { background: var(--tint-family); color: #0e6655; }
+.badge.financial { background: var(--tint-financial); color: #0a5c2e; }
+.badge.business { background: var(--tint-business); color: #2c3e50; }
+.badge.other { background: var(--tint-other); color: #515a5a; }
+
+/* Multi-color chart bars */
+.bar > div.fill-food { background: var(--cat-food); }
+.bar > div.fill-transport { background: var(--cat-transport); }
+.bar > div.fill-comms { background: var(--cat-comms); }
+.bar > div.fill-home { background: var(--cat-home); }
+.bar > div.fill-family { background: var(--cat-family); }
+.bar > div.fill-health { background: var(--cat-health); }

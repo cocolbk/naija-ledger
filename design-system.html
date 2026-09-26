@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Naija Ledger — Design System Gallery</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .swatch { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .swatch .fill { height: 56px; }
+    .swatch p { margin: 0; padding: 6px 8px; font-size: 12px; }
+    .gallery-note { max-width: 960px; margin: 0 auto; padding: 14px; }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-icon">📒</span>
+      <div><h1>Naija Ledger</h1><p>Design System Gallery</p></div>
+    </div>
+    <button class="btn primary">+ Add Expense</button>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active">Home</button>
+    <button class="tab">Transactions</button>
+    <button class="tab">Budget</button>
+    <button class="tab">Reports</button>
+    <button class="tab">Profile</button>
+  </nav>
+
+  <main>
+    <div class="card">
+      <h3>1. Color tokens</h3>
+      <div class="swatches">
+        <div class="swatch"><div class="fill" style="background:var(--bg)"></div><p>--bg #f6f4ec (page)</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--card);border-bottom:1px solid var(--line)"></div><p>--card #ffffff</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--ink)"></div><p>--ink #1d1d1d</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--muted)"></div><p>--muted #6b6b6b</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--green)"></div><p>--green #0e7c3e (primary)</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--green-dark)"></div><p>--green-dark #0a5c2e</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--amber)"></div><p>--amber #e8a100 (warn 80%+)</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--red)"></div><p>--red #c0392b (over 100%)</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--line)"></div><p>--line #e6e1d3 (borders)</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>2. Category colors</h3>
+      <p class="muted">Every category gets its own color — used for dots, badges, and chart bars.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="fill" style="background:var(--cat-food)"></div><p>Food &amp; Drinks</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-transport)"></div><p>Transportation</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-comms)"></div><p>Communication</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-home)"></div><p>Home &amp; Utilities</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-personal)"></div><p>Personal</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-health)"></div><p>Health</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-education)"></div><p>Education</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-family)"></div><p>Family</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-financial)"></div><p>Financial</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-business)"></div><p>Business</p></div>
+        <div class="swatch"><div class="fill" style="background:var(--cat-other)"></div><p>Other</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>3. Category badges &amp; dots</h3>
+      <p>
+        <span class="badge food">🍔 Food</span>
+        <span class="badge transport">🚌 Transport</span>
+        <span class="badge comms">📱 Comms</span>
+        <span class="badge home">💡 Home</span>
+        <span class="badge health">🏥 Health</span>
+        <span class="badge education">📚 Education</span>
+        <span class="badge family">👨‍👩‍👧 Family</span>
+        <span class="badge financial">💰 Financial</span>
+        <span class="badge business">💼 Business</span>
+        <span class="badge other">📦 Other</span>
+      </p>
+      <p><span class="dot" style="background:var(--cat-food)"></span>Food &amp; Drinks
+      <span class="dot" style="background:var(--cat-transport)"></span>Transportation
+      <span class="dot" style="background:var(--cat-family)"></span>Family</p>
+    </div>
+
+    <div class="card">
+      <h3>4. Multi-color spending bars</h3>
+      <div style="margin:8px 0"><div class="row-between"><span><span class="dot" style="background:var(--cat-food)"></span>Food &amp; Drinks</span><span>38% • ₦45,000</span></div><div class="bar"><div class="fill-food" style="width:38%"></div></div></div>
+      <div style="margin:8px 0"><div class="row-between"><span><span class="dot" style="background:var(--cat-transport)"></span>Transportation</span><span>25% • ₦30,000</span></div><div class="bar"><div class="fill-transport" style="width:25%"></div></div></div>
+      <div style="margin:8px 0"><div class="row-between"><span><span class="dot" style="background:var(--cat-comms)"></span>Communication</span><span>12% • ₦14,000</span></div><div class="bar"><div class="fill-comms" style="width:12%"></div></div></div>
+      <div style="margin:8px 0"><div class="row-between"><span><span class="dot" style="background:var(--cat-family)"></span>Family</span><span>10% • ₦12,000</span></div><div class="bar"><div class="fill-family" style="width:10%"></div></div></div>
+    </div>
+
+    <div class="card">
+      <h3>5. Typography</h3>
+      <h1>Heading 1 — Naija Ledger</h1>
+      <h2>Heading 2 — Know Where Your Money Goes.</h2>
+      <h3>Heading 3 — Card title</h3>
+      <p class="big">₦250,000 — big money figure</p>
+      <p>Body text — recording an expense should take very little effort.</p>
+      <p class="muted">Muted text — secondary info, hints, timestamps.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Buttons</h3>
+      <div class="row">
+        <button class="btn primary">Primary</button>
+        <button class="btn">Default</button>
+        <button class="btn danger">Danger</button>
+        <button class="btn link">Link button</button>
+        <button class="btn mode active">Mode active</button>
+        <button class="btn mode">Mode</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>7. Progress bars (budget states)</h3>
+      <p class="muted">Normal (&lt;80%)</p>
+      <div class="progress"><div class="progress-fill" style="width:45%"></div></div>
+      <p class="muted">Warning (80%+)</p>
+      <div class="progress"><div class="progress-fill warn" style="width:85%"></div></div>
+      <p class="muted">Over budget (100%+)</p>
+      <div class="progress"><div class="progress-fill over" style="width:100%"></div></div>
+    </div>
+
+    <div class="card">
+      <h3>8. Alerts</h3>
+      <p class="alert">Heads up: you've used 85% of your monthly budget.</p>
+      <p class="alert danger">⚠️ Monthly budget exceeded by ₦5,000.</p>
+    </div>
+
+    <div class="card">
+      <h3>9. Chips (onboarding / category select)</h3>
+      <span class="chip selected">🍔 Food &amp; Drinks</span>
+      <span class="chip selected">🚌 Transportation</span>
+      <span class="chip">📱 Communication</span>
+      <span class="chip">💡 Home &amp; Utilities</span>
+      <span class="chip">Personal</span>
+      <span class="chip selected">Student</span>
+    </div>
+
+    <div class="card">
+      <h3>10. Transaction row</h3>
+      <div class="txn">
+        <div><div>🍔 Lunch</div>
+        <div class="muted">Food &amp; Drinks • 2026-09-26 13:00 • Cash</div></div>
+        <div style="text-align:right"><div class="amt">₦2,500</div>
+        <div><button class="btn link">Edit</button></div></div>
+      </div>
+      <div class="txn">
+        <div><div>🚌 Bus fare</div>
+        <div class="muted">Transportation • 2026-09-26 • POS</div></div>
+        <div style="text-align:right"><div class="amt">₦500</div>
+        <div><button class="btn link">Edit</button></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>11. Category / budget rows + bar</h3>
+      <div class="cat-row"><span>🍔 Food &amp; Drinks</span><strong>₦45,000 / ₦60,000</strong></div>
+      <div style="margin:8px 0"><div class="row-between"><span>🚌 Transportation</span><span>30% • ₦15,000</span></div><div class="bar"><div style="width:30%"></div></div></div>
+    </div>
+
+    <div class="card">
+      <h3>12. Form controls</h3>
+      <label>Amount (₦) * <input type="number" placeholder="e.g. 2500" value="2500" /></label>
+      <label>Category * <select><option>🍔 Food &amp; Drinks</option><option>🚌 Transportation</option></select></label>
+      <label>Notes <textarea rows="2" placeholder="Optional notes"></textarea></label>
+      <div class="filters">
+        <input type="search" placeholder="Search..." />
+        <select><option>All categories</option></select>
+        <select><option>All payment methods</option></select>
+        <input type="date" value="2026-09-01" />
+        <input type="date" value="2026-09-26" />
+        <input type="number" placeholder="Min ₦" />
+        <input type="number" placeholder="Max ₦" />
+        <button class="btn">Clear</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><h3>Grid card A</h3><p class="big">₦12,500</p><p class="muted">Today's spending</p></div>
+      <div class="card"><h3>Grid card B</h3><p class="big">₦180,000</p><p class="muted">Monthly spending</p></div>
+    </div>
+  </main>
+
+  <footer><p>Naija Ledger Design System • Every Naira Counts.</p></footer>
+</body>
+</html>

@@ -1,0 +1,39 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JS syntax check
+        run: node --check app.js
+      - name: Required files present (PRD must never be deleted)
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f app.js
+          test -f README.md
+          test -f IMPLEMENTATION_PLAN.md
+          test -f Naija_Ledger_PRD.docx
+      - name: No Word lock files tracked
+        run: |
+          if git ls-files | grep -q '~\$'; then
+            echo "Word lock file tracked!"; exit 1;
+          fi
+      - name: App element IDs referenced in JS exist in HTML
+        run: |
+          node -e "
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const js = fs.readFileSync('app.js', 'utf8');
+          const ids = [...js.matchAll(/getElementById\(\"([^\"]+)\"\)/g)].map(m => m[1]);
+          const dynamic = new Set(['ob-next', 'ob-back', 'ob-done', 'ob-monthly']); // rendered by renderOnboarding()
+          const missing = [...new Set(ids)].filter(id => !dynamic.has(id) && !html.includes('id=\"' + id + '\"'));
+          if (missing.length) { console.error('Missing IDs in index.html:', missing.join(', ')); process.exit(1); }
+          console.log('All ' + ids.length + ' referenced IDs present.');
+          "
