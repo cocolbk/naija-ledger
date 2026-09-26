@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div id="onboarding-overlay" class="overlay hidden">
     <div class="onboard-card">
       <h1>Naija Ledger</h1>
@@ -23,20 +24,23 @@
         <p>Know Where Your Money Goes.</p>
       </div>
     </div>
-    <button id="global-add-btn" class="btn primary">+ Add Expense</button>
+    <div class="row" style="margin-top:0">
+      <button id="theme-toggle" class="btn" aria-label="Toggle dark mode">🌙</button>
+      <button id="global-add-btn" class="btn primary">+ Add Expense</button>
+    </div>
   </header>
 
-  <nav class="tabs">
-    <button data-tab="home" class="tab active">Home</button>
-    <button data-tab="transactions" class="tab">Transactions</button>
-    <button data-tab="budget" class="tab">Budget</button>
-    <button data-tab="reports" class="tab">Reports</button>
-    <button data-tab="settings" class="tab">Profile</button>
+  <nav class="tabs" role="tablist" aria-label="Primary">
+    <button data-tab="home" id="tabbtn-home" class="tab active" role="tab" aria-selected="true" aria-controls="tab-home">Home</button>
+    <button data-tab="transactions" id="tabbtn-transactions" class="tab" role="tab" aria-selected="false" aria-controls="tab-transactions">Transactions</button>
+    <button data-tab="budget" id="tabbtn-budget" class="tab" role="tab" aria-selected="false" aria-controls="tab-budget">Budget</button>
+    <button data-tab="reports" id="tabbtn-reports" class="tab" role="tab" aria-selected="false" aria-controls="tab-reports">Reports</button>
+    <button data-tab="settings" id="tabbtn-settings" class="tab" role="tab" aria-selected="false" aria-controls="tab-settings">Profile</button>
   </nav>
 
-  <main>
+  <main id="main">
     <!-- HOME -->
-    <section id="tab-home" class="tab-panel active">
+    <section id="tab-home" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-home">
       <div class="grid-2">
         <div class="card">
           <h3>Today's Spending</h3>
@@ -68,7 +72,7 @@
     </section>
 
     <!-- TRANSACTIONS -->
-    <section id="tab-transactions" class="tab-panel">
+    <section id="tab-transactions" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-transactions">
       <div class="card">
         <h3>Transaction History</h3>
         <div class="filters">
@@ -94,7 +98,7 @@
     </section>
 
     <!-- BUDGET -->
-    <section id="tab-budget" class="tab-panel">
+    <section id="tab-budget" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-budget">
       <div class="card">
         <h3>Monthly Budget</h3>
         <p class="big" id="budget-monthly-display">Not set</p>
@@ -105,7 +109,7 @@
           <button id="save-monthly-budget" class="btn primary">Save</button>
           <button id="clear-monthly-budget" class="btn">Remove</button>
         </div>
-        <p id="budget-alert" class="alert hidden"></p>
+        <p id="budget-alert" class="alert hidden" role="status"></p>
       </div>
       <div class="card">
         <h3>Category Budgets</h3>
@@ -114,7 +118,7 @@
     </section>
 
     <!-- REPORTS -->
-    <section id="tab-reports" class="tab-panel">
+    <section id="tab-reports" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-reports">
       <div class="grid-2">
         <div class="card"><h3>Today vs Yesterday</h3><div id="rep-today-yesterday"></div></div>
         <div class="card"><h3>This Month vs Last Month</h3><div id="rep-month-compare"></div></div>
@@ -125,7 +129,7 @@
     </section>
 
     <!-- SETTINGS -->
-    <section id="tab-settings" class="tab-panel">
+    <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-settings">
       <div class="card">
         <h3>User Profile</h3>
         <label>Name <input id="set-name" type="text" placeholder="Your name" /></label>
@@ -167,7 +171,7 @@
 
   <!-- Expense modal -->
   <div id="expense-modal" class="overlay hidden">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
       <div class="row-between">
         <h2 id="expense-modal-title">Add Expense</h2>
         <button id="expense-close" class="btn">✕</button>

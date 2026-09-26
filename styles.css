@@ -232,3 +232,92 @@ footer { text-align: center; color: var(--muted); padding: 18px; font-size: 12px
 .bar > div.fill-home { background: var(--cat-home); }
 .bar > div.fill-family { background: var(--cat-family); }
 .bar > div.fill-health { background: var(--cat-health); }
+
+/* ---------- Phase 1: scale tokens ---------- */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.card { box-shadow: var(--shadow-1); }
+
+/* ---------- Phase 1: dark theme (toggle or OS preference) ---------- */
+[data-theme="dark"] {
+  --bg: #161811;
+  --card: #1f221b;
+  --ink: #f2f0e6;
+  --muted: #a8a496;
+  --line: #353a2b;
+  --green: #2ea36b;
+  --green-dark: #1e7a4e;
+}
+[data-theme="dark"] .btn,
+[data-theme="dark"] .tab { background: var(--card); color: var(--ink); }
+[data-theme="dark"] .tab.active { background: var(--green); color: #fff; }
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea { background: #262b20; color: var(--ink); }
+[data-theme="dark"] .progress,
+[data-theme="dark"] .bar { background: #33382a; }
+
+/* ---------- Phase 1: accessibility ---------- */
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.big, .amt { font-variant-numeric: tabular-nums; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  background: var(--ink);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  z-index: 100;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 8px; color: #fff; }
+
+/* ---------- Phase 1: touch targets ---------- */
+.tab { min-height: 44px; }
+
+/* ---------- Phase 1: mobile bottom nav + floating Add ---------- */
+@media (max-width: 700px) {
+  body { padding-bottom: 84px; }
+  .tabs {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: none;
+    justify-content: space-around;
+    background: var(--card);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .app-header { position: static; }
+  #global-add-btn {
+    position: fixed;
+    right: 16px;
+    bottom: 92px;
+    z-index: 10;
+    border-radius: 999px;
+    box-shadow: var(--shadow-2);
+    padding: 14px 18px;
+  }
+}

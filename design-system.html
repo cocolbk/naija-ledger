@@ -19,7 +19,10 @@
       <span class="brand-icon">📒</span>
       <div><h1>Naija Ledger</h1><p>Design System Gallery</p></div>
     </div>
-    <button class="btn primary">+ Add Expense</button>
+    <div class="row" style="margin-top:0">
+      <button class="btn" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+      <button class="btn primary">+ Add Expense</button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -182,8 +185,43 @@
       <div class="card"><h3>Grid card A</h3><p class="big">₦12,500</p><p class="muted">Today's spending</p></div>
       <div class="card"><h3>Grid card B</h3><p class="big">₦180,000</p><p class="muted">Monthly spending</p></div>
     </div>
+
+    <div class="card">
+      <h3>13. Spacing, radius &amp; elevation</h3>
+      <p class="muted">Tokens: --space-1/2/3/4/6 (4/8/12/16/24px) • --radius-s/m/l (8/12/20px) • --shadow-1/2. Cards carry --shadow-1.</p>
+      <div class="row">
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius-s);padding:var(--space-2)">radius-s</div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius-m);padding:var(--space-3);box-shadow:var(--shadow-1)">radius-m + shadow-1</div>
+        <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--radius-l);padding:var(--space-4);box-shadow:var(--shadow-2)">radius-l + shadow-2</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>14. Dark mode, focus &amp; touch</h3>
+      <p class="muted">Tap the 🌙 button in the header to preview the dark theme (follows OS setting by default). Tab to the buttons below to see the gold focus ring. Tabs are 44px minimum touch targets; on narrow screens the tab bar docks to the bottom and Add becomes a floating button.</p>
+      <div class="row">
+        <button class="btn primary">Tab to me</button>
+        <button class="btn">Focus ring demo</button>
+      </div>
+    </div>
   </main>
 
   <footer><p>Naija Ledger Design System • Every Naira Counts.</p></footer>
+  <script>
+    const btn = document.getElementById('theme-toggle');
+    function paint() {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      btn.textContent = dark ? '☀️' : '🌙';
+    }
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+    btn.onclick = () => {
+      document.documentElement.dataset.theme =
+        document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      paint();
+    };
+    paint();
+  </script>
 </body>
 </html>

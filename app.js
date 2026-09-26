@@ -36,7 +36,7 @@ function loadState() {
 }
 function defaultState() {
   return {
-    user: { name: "", profileType: "Personal", currency: "₦", onboarded: false },
+    user: { name: "", profileType: "Personal", currency: "₦", onboarded: false, theme: "auto" },
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c, custom: false })),
     expenses: [],
     budgets: { monthly: null, categories: {} },
@@ -59,7 +59,11 @@ document.querySelectorAll(".tab").forEach((btn) => {
   btn.addEventListener("click", () => showTab(btn.dataset.tab));
 });
 function showTab(name) {
-  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tab").forEach((b) => {
+    const on = b.dataset.tab === name;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + name));
 }
 document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.goto)));
@@ -131,9 +135,31 @@ function renderOnboarding() {
   }
 }
 
+// ---------- Theme (light / dark / follow OS) ----------
+function applyTheme() {
+  const t = (state.user && state.user.theme) || "auto";
+  const dark = t === "dark" || (t === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = dark ? "☀️" : "🌙";
+}
+document.getElementById("theme-toggle").onclick = () => {
+  const cur = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  state.user.theme = cur;
+  save();
+  applyTheme();
+};
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+
 // ---------- Expense modal ----------
 const expModal = document.getElementById("expense-modal");
 let expMode = "quick";
+let lastFocused = null;
+
+function closeExpenseModal() {
+  expModal.classList.add("hidden");
+  if (lastFocused) lastFocused.focus();
+}
 
 function openExpenseModal(editId = null) {
   document.getElementById("exp-id").value = editId || "";
@@ -162,7 +188,9 @@ function openExpenseModal(editId = null) {
     document.getElementById("exp-notes").value = "";
     setExpMode("quick");
   }
+  lastFocused = document.activeElement;
   expModal.classList.remove("hidden");
+  document.getElementById("exp-amount").focus();
 }
 function setExpMode(m) {
   expMode = m;
@@ -173,8 +201,11 @@ function setExpMode(m) {
 document.getElementById("mode-quick").onclick = () => setExpMode("quick");
 document.getElementById("mode-detailed").onclick = () => setExpMode("detailed");
 document.getElementById("global-add-btn").onclick = () => openExpenseModal();
-document.getElementById("expense-close").onclick = () => expModal.classList.add("hidden");
-expModal.addEventListener("click", (e) => { if (e.target === expModal) expModal.classList.add("hidden"); });
+document.getElementById("expense-close").onclick = () => closeExpenseModal();
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !expModal.classList.contains("hidden")) closeExpenseModal();
+});
+expModal.addEventListener("click", (e) => { if (e.target === expModal) closeExpenseModal(); });
 
 document.getElementById("expense-save").onclick = () => {
   const id = document.getElementById("exp-id").value || uid();
@@ -199,7 +230,7 @@ document.getElementById("expense-save").onclick = () => {
   if (existing) Object.assign(existing, obj);
   else state.expenses.push(obj);
   save();
-  expModal.classList.add("hidden");
+  closeExpenseModal();
   refreshAll();
 };
 document.getElementById("expense-delete").onclick = () => {
@@ -207,7 +238,7 @@ document.getElementById("expense-delete").onclick = () => {
   if (!id || !confirm("Delete this expense?")) return;
   state.expenses = state.expenses.filter((x) => x.id !== id);
   save();
-  expModal.classList.add("hidden");
+  closeExpenseModal();
   refreshAll();
 };
 
@@ -495,6 +526,7 @@ document.getElementById("reset-data").onclick = () => {
 
 // ---------- Boot ----------
 function refreshAll() {
+  applyTheme();
   refreshCategorySelects();
   refreshDashboard();
   refreshTransactions();
