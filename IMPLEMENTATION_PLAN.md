@@ -38,7 +38,9 @@ Goal: PRD Sec-22 — Simple, Nigerian-focused, Clear, Flexible, Non-judgmental, 
 5. A11y: focus trap + ESC in expense modal, ARIA for tabs/progress/alerts, contrast check, keyboard-only onboarding.
 6. Acceptance: gallery page, Lighthouse a11y ≥ 90, no break at 360px.
 
-## Phase 2 — Architecture decisions (LOCKED by owner, Sep 2026)
+## Phase 2 — Architecture decisions (LOCKED by owner, Sep 2026 — ✅ BUILT & VERIFIED)
+
+Live on this machine: PostgreSQL 17.11 portable (`C:\Users\HomePC\pg17`, data `%LOCALAPPDATA%\naija-ledger\pgdata`, port 5433, `server/pg-start.ps1`), `server/` Hono + Better Auth + Drizzle API verified (`/api/health`, signup, signin, `/api/me`), migration + 11-category seed applied. R2 client ready (needs your `R2_*` keys in `server/.env`).
 
 - Database: **local PostgreSQL on this device. No Supabase** (subscription avoided).
 - Auth: **Better Auth** (self-hosted, no Supabase Auth).

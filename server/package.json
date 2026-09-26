@@ -1,0 +1,39 @@
+{
+  "name": "naija-ledger-server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/migrate.ts",
+    "db:seed": "tsx src/seed.ts",
+    "auth:schema": "npx @better-auth/cli generate --config ./src/auth.ts --output ./src/auth-schema.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "@hono/node-server": "^1.13.0",
+    "better-auth": "^1.2.0",
+    "dotenv": "^16.4.0",
+    "drizzle-orm": "^0.45.0",
+    "hono": "^4.6.0",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@better-auth/cli": "^1.2.0",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.6.0"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "better-sqlite3@12.11.1": true,
+    "@prisma/client": false
+  }
+}
