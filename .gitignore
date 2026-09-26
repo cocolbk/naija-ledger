@@ -11,6 +11,8 @@ Desktop.ini
 # Logs
 *.log
 npm-debug.log*
+server/dev.log
+server/dev.err.log
 
 # Editor
 .vscode/
