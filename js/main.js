@@ -8,6 +8,7 @@ import {
   saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs,
   exportJson, exportCsv, importCsvFile, resetAllData,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
+  saveGoalFromForm, resetGoalForm,
   setRefreshHook, setResetHook,
 } from "./ui.js";
 
@@ -172,6 +173,8 @@ document.getElementById("import-csv").addEventListener("change", (e) => {
   e.target.value = "";
 });
 document.getElementById("reset-data").onclick = resetAllData;
+document.getElementById("goal-save").onclick = saveGoalFromForm;
+document.getElementById("goal-cancel").onclick = resetGoalForm;
 
 // ---------- Boot ----------
 function boot() {

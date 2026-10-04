@@ -28,6 +28,8 @@ export function defaultState() {
     expenses: [],
     budgets: { monthlyKobo: null, categories: {} },
     savedFilters: [],
+    savings: [],
+    contributions: [],
     onboardDraft: {
       profileType: "Personal",
       categoryIds: DEFAULT_CATEGORIES.map((c) => c.id),
@@ -79,6 +81,8 @@ function load() {
       const s = JSON.parse(raw2);
       if (s && s.version === 2) {
         if (!Array.isArray(s.savedFilters)) s.savedFilters = [];
+        if (!Array.isArray(s.savings)) s.savings = [];
+        if (!Array.isArray(s.contributions)) s.contributions = [];
         return s;
       }
     }

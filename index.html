@@ -34,6 +34,7 @@
     <button data-tab="home" id="tabbtn-home" class="tab active" role="tab" aria-selected="true" aria-controls="tab-home">Home</button>
     <button data-tab="transactions" id="tabbtn-transactions" class="tab" role="tab" aria-selected="false" aria-controls="tab-transactions">Transactions</button>
     <button data-tab="budget" id="tabbtn-budget" class="tab" role="tab" aria-selected="false" aria-controls="tab-budget">Budget</button>
+    <button data-tab="savings" id="tabbtn-savings" class="tab" role="tab" aria-selected="false" aria-controls="tab-savings">Savings</button>
     <button data-tab="reports" id="tabbtn-reports" class="tab" role="tab" aria-selected="false" aria-controls="tab-reports">Reports</button>
     <button data-tab="settings" id="tabbtn-settings" class="tab" role="tab" aria-selected="false" aria-controls="tab-settings">Profile</button>
   </nav>
@@ -134,6 +135,29 @@
       <div class="card">
         <h3>Category Budgets</h3>
         <div id="category-budgets"></div>
+      </div>
+    </section>
+
+    <!-- SAVINGS -->
+    <section id="tab-savings" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-savings">
+      <div class="card">
+        <h3 id="savings-summary-title">Savings Goals</h3>
+        <p class="muted" id="savings-summary-line"></p>
+        <div id="goal-list"></div>
+      </div>
+      <div class="card">
+        <h3 id="goal-form-title">New Savings Goal</h3>
+        <input type="hidden" id="goal-id" />
+        <label>Goal name * <input id="goal-name" type="text" placeholder="e.g. Rent, New phone, School fees" maxlength="60" /></label>
+        <div class="grid-2">
+          <label>Target amount (₦) * <input id="goal-target" type="number" min="0.01" step="0.01" placeholder="e.g. 500000" /></label>
+          <label>Target date (optional) <input id="goal-date" type="date" /></label>
+        </div>
+        <p id="goal-error" class="error-text hidden" role="alert"></p>
+        <div class="row">
+          <button id="goal-save" class="btn primary">Save Goal</button>
+          <button id="goal-cancel" class="btn hidden">Cancel</button>
+        </div>
       </div>
     </section>
 

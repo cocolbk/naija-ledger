@@ -4,6 +4,7 @@ import { esc, fmtKobo, koboToInput, parseAmountToKobo, todayLocal, addDaysStr, p
 import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, PAYMENT_METHODS } from "./expenses.js";
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
+import { getGoals, getContributions, goalPct, remainingKobo, daysLeft, upsertGoal, deleteGoal, recordContribution, savingsTotals } from "./savings.js";
 
 // ---------- Category selects ----------
 export function refreshCategorySelects() {
@@ -366,6 +367,118 @@ export function refreshReports() {
     .join("");
 }
 
+// ---------- Savings goals ----------
+function goalFormError(msg) {
+  const el = document.getElementById("goal-error");
+  if (!msg) { el.textContent = ""; el.classList.add("hidden"); return; }
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+
+export function resetGoalForm() {
+  document.getElementById("goal-id").value = "";
+  document.getElementById("goal-name").value = "";
+  document.getElementById("goal-target").value = "";
+  document.getElementById("goal-date").value = "";
+  document.getElementById("goal-form-title").textContent = "New Savings Goal";
+  document.getElementById("goal-cancel").classList.add("hidden");
+  goalFormError(null);
+}
+
+export function refreshSavings() {
+  const t = savingsTotals();
+  document.getElementById("savings-summary-line").textContent = t.count
+    ? `${t.count} goal${t.count === 1 ? "" : "s"} • ${fmtKobo(t.saved, cur())} saved of ${fmtKobo(t.target, cur())}`
+    : "No goals yet. Create one below — rent, school fees, emergency fund, anything.";
+  const goals = getGoals();
+  document.getElementById("goal-list").innerHTML = goals.length
+    ? goals.map((g) => {
+        const pct = goalPct(g);
+        const dl = daysLeft(g.targetDate, todayLocal());
+        const dlText = dl === null ? "" : dl < 0 ? `${-dl} day${-dl === 1 ? "" : "s"} past target` : dl === 0 ? "target is today" : `${dl} day${dl === 1 ? "" : "s"} left`;
+        const hist = getContributions(g.id).slice(0, 3);
+        return `<div class="budget-row" style="display:block">
+          <div class="row-between"><strong>${esc(g.name)}</strong>
+          <span class="muted">${g.targetDate ? esc(g.targetDate) + (dlText ? " • " + esc(dlText) : "") : "No target date"}</span></div>
+          <p class="big" style="font-size:22px">${esc(fmtKobo(g.savedKobo, cur()))} <span class="muted" style="font-size:13px">of ${esc(fmtKobo(g.targetKobo, cur()))} • ${pct}%</span></p>
+          <div class="bar"><div style="width:${pct}%;${pct >= 100 ? "background:var(--gold)" : ""}"></div></div>
+          <p class="muted">${remainingKobo(g) > 0 ? esc(fmtKobo(remainingKobo(g), cur())) + " to go" : "Goal reached. Well done."}</p>
+          <div class="row">
+            <button class="btn" data-gact="in" data-gid="${esc(g.id)}">Contribute</button>
+            <button class="btn" data-gact="out" data-gid="${esc(g.id)}">Withdraw</button>
+            <button class="btn link" data-gedit="${esc(g.id)}">Edit</button>
+            <button class="btn link" data-gdel="${esc(g.id)}">Delete</button>
+          </div>
+          <div class="row hidden" id="grow-${esc(g.id)}">
+            <input type="number" min="0.01" step="0.01" placeholder="Amount ₦" data-gamt="${esc(g.id)}" style="max-width:150px" />
+            <input type="text" placeholder="Note (optional)" datagnote="${esc(g.id)}" maxlength="120" style="max-width:200px" />
+            <button class="btn primary" data-gok="${esc(g.id)}">Confirm</button>
+          </div>
+          <p class="error-text hidden" id="gerr-${esc(g.id)}" role="alert"></p>
+          ${hist.length ? `<div class="muted" style="font-size:12px">Recent: ${hist.map((c) => `${c.kobo < 0 ? "−" : "+"}${esc(fmtKobo(Math.abs(c.kobo), cur()))}${c.note ? " — " + esc(c.note) : ""}`).join(" • ")}</div>` : ""}
+        </div>`;
+      }).join("")
+    : "";
+  const list = document.getElementById("goal-list");
+  list.querySelectorAll("[data-gact]").forEach((b) => {
+    b.onclick = () => {
+      const row = document.getElementById("grow-" + b.dataset.gid);
+      const kind = b.dataset.gact;
+      const willOpen = row.classList.contains("hidden") || row.dataset.kind !== kind;
+      row.dataset.kind = kind;
+      row.classList.toggle("hidden", !willOpen);
+      if (willOpen) row.querySelector("[data-gamt]").focus();
+    };
+  });
+  list.querySelectorAll("[data-gok]").forEach((b) => {
+    b.onclick = () => {
+      const gid = b.dataset.gok;
+      const row = document.getElementById("grow-" + gid);
+      const amt = row.querySelector("[data-gamt]").value;
+      const noteVal = row.querySelector("[datagnote]").value;
+      const err = recordContribution(gid, row.dataset.kind || "in", amt, noteVal);
+      const errEl = document.getElementById("gerr-" + gid);
+      if (err) { errEl.textContent = err; errEl.classList.remove("hidden"); return; }
+      refreshAll();
+    };
+  });
+  list.querySelectorAll("[data-gedit]").forEach((b) => {
+    b.onclick = () => {
+      const g = getGoals().find((x) => x.id === b.dataset.gedit);
+      if (!g) return;
+      document.getElementById("goal-id").value = g.id;
+      document.getElementById("goal-name").value = g.name;
+      document.getElementById("goal-target").value = koboToInput(g.targetKobo);
+      document.getElementById("goal-date").value = g.targetDate || "";
+      document.getElementById("goal-form-title").textContent = "Edit Savings Goal";
+      document.getElementById("goal-cancel").classList.remove("hidden");
+      document.getElementById("goal-name").focus();
+      window.scrollTo({ top: document.getElementById("goal-name").getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
+    };
+  });
+  list.querySelectorAll("[data-gdel]").forEach((b) => {
+    b.onclick = () => {
+      const g = getGoals().find((x) => x.id === b.dataset.gdel);
+      if (!g) return;
+      if (!confirm(`Delete goal "${g.name}" and its contribution history?`)) return;
+      deleteGoal(g.id);
+      refreshAll();
+    };
+  });
+}
+
+export function saveGoalFromForm() {
+  const res = upsertGoal({
+    id: document.getElementById("goal-id").value || undefined,
+    name: document.getElementById("goal-name").value,
+    target: document.getElementById("goal-target").value,
+    targetDate: document.getElementById("goal-date").value,
+  });
+  if (res.error) { goalFormError(res.error); return; }
+  resetGoalForm();
+  refreshAll();
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
@@ -609,6 +722,7 @@ export function refreshAll() {
   refreshDashboard();
   refreshTransactions();
   refreshBudget();
+  refreshSavings();
   refreshReports();
   refreshSettings();
 }
