@@ -30,6 +30,7 @@ export function defaultState() {
     savedFilters: [],
     savings: [],
     contributions: [],
+    recurring: [],
     onboardDraft: {
       profileType: "Personal",
       categoryIds: DEFAULT_CATEGORIES.map((c) => c.id),
@@ -83,6 +84,7 @@ function load() {
         if (!Array.isArray(s.savedFilters)) s.savedFilters = [];
         if (!Array.isArray(s.savings)) s.savings = [];
         if (!Array.isArray(s.contributions)) s.contributions = [];
+        if (!Array.isArray(s.recurring)) s.recurring = [];
         return s;
       }
     }

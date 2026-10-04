@@ -37,6 +37,7 @@
     <button data-tab="savings" id="tabbtn-savings" class="tab" role="tab" aria-selected="false" aria-controls="tab-savings">Savings</button>
     <button data-tab="reports" id="tabbtn-reports" class="tab" role="tab" aria-selected="false" aria-controls="tab-reports">Reports</button>
     <button data-tab="calendar" id="tabbtn-calendar" class="tab" role="tab" aria-selected="false" aria-controls="tab-calendar">Calendar</button>
+    <button data-tab="recurring" id="tabbtn-recurring" class="tab" role="tab" aria-selected="false" aria-controls="tab-recurring">Recurring</button>
     <button data-tab="settings" id="tabbtn-settings" class="tab" role="tab" aria-selected="false" aria-controls="tab-settings">Profile</button>
   </nav>
 
@@ -188,6 +189,46 @@
         <h3 id="cal-day-title">Today</h3>
         <p class="big" id="cal-day-total">₦0</p>
         <div id="cal-day-list"></div>
+      </div>
+    </section>
+
+    <!-- RECURRING -->
+    <section id="tab-recurring" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-recurring">
+      <div class="card">
+        <h3>Due Soon</h3>
+        <div id="rec-due"></div>
+      </div>
+      <div class="card">
+        <h3>All Recurring Expenses</h3>
+        <div id="rec-list"></div>
+      </div>
+      <div class="card">
+        <h3 id="rec-form-title">New Recurring Expense</h3>
+        <input type="hidden" id="rec-id" />
+        <label>Name * <input id="rec-name" type="text" placeholder="e.g. Rent, Electricity, DSTV" maxlength="60" /></label>
+        <div class="grid-2">
+          <label>Amount (₦) * <input id="rec-amount" type="number" min="0.01" step="0.01" placeholder="e.g. 50000" /></label>
+          <label>Category * <select id="rec-category"></select></label>
+        </div>
+        <div class="grid-2">
+          <label>Frequency *
+            <select id="rec-freq">
+              <option value="weekly">Weekly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Every 3 months</option>
+              <option value="yearly">Yearly</option>
+              <option value="custom">Every N days</option>
+            </select>
+          </label>
+          <label id="rec-days-wrap" class="hidden">Every how many days? <input id="rec-days" type="number" min="1" step="1" value="30" /></label>
+        </div>
+        <label>Next due date <input id="rec-next" type="date" /></label>
+        <label>Notes <input id="rec-notes" type="text" placeholder="Optional" maxlength="200" /></label>
+        <p id="rec-error" class="error-text hidden" role="alert"></p>
+        <div class="row">
+          <button id="rec-save" class="btn primary">Save Schedule</button>
+          <button id="rec-cancel" class="btn hidden">Cancel</button>
+        </div>
       </div>
     </section>
 

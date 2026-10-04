@@ -9,6 +9,7 @@ import {
   exportJson, exportCsv, importCsvFile, resetAllData,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
   saveGoalFromForm, resetGoalForm, shiftCalMonth, resetCalMonth,
+  saveRecFromForm, resetRecForm,
   setRefreshHook, setResetHook,
 } from "./ui.js";
 
@@ -178,6 +179,11 @@ document.getElementById("import-csv").addEventListener("change", (e) => {
 document.getElementById("reset-data").onclick = resetAllData;
 document.getElementById("goal-save").onclick = saveGoalFromForm;
 document.getElementById("goal-cancel").onclick = resetGoalForm;
+document.getElementById("rec-save").onclick = saveRecFromForm;
+document.getElementById("rec-cancel").onclick = resetRecForm;
+document.getElementById("rec-freq").onchange = (e) => {
+  document.getElementById("rec-days-wrap").classList.toggle("hidden", e.target.value !== "custom");
+};
 
 // ---------- Boot ----------
 function boot() {

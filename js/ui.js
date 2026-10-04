@@ -5,6 +5,7 @@ import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecen
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
 import { buildMonthGrid, shiftMonthKey } from "./calendar.js";
+import { getRecurring, FREQUENCIES, dueStatus, upsertRecurring, deleteRecurring, toggleRecurring, recordPayment } from "./recurring.js";
 import { getGoals, getContributions, goalPct, remainingKobo, daysLeft, upsertGoal, deleteGoal, recordContribution, savingsTotals } from "./savings.js";
 
 // ---------- Category selects ----------
@@ -538,6 +539,132 @@ export function refreshCalendar() {
   bindTxnButtons(el);
 }
 
+// ---------- Recurring ----------
+const REC_STATUS = {
+  overdue: { label: "Overdue", cls: "health" },
+  due: { label: "Due today", cls: "home" },
+  soon: { label: "Due soon", cls: "transport" },
+  later: { label: "Scheduled", cls: "financial" },
+  paused: { label: "Paused", cls: "other" },
+};
+
+// Map our status onto existing badge tints: other=grey, home=gold, transport=blue, financial=green.
+function recRow(r) {
+  const st = dueStatus(r, todayLocal());
+  const badge = REC_STATUS[st];
+  const freq = FREQUENCIES.find((f) => f.id === r.frequency);
+  const freqLabel = r.frequency === "custom" ? `Every ${r.intervalDays} days` : (freq ? freq.label : r.frequency);
+  return `<div class="budget-row" style="display:block;${r.active ? "" : "opacity:0.6"}">
+    <div class="row-between"><strong>${esc(r.name)}</strong><span class="badge ${badge.cls}">${badge.label}</span></div>
+    <p style="margin:4px 0"><span class="amt">${esc(fmtKobo(r.amountKobo, cur()))}</span>
+    <span class="muted"> • ${esc(catById(r.categoryId).name)} • ${esc(freqLabel)} • next: ${esc(r.nextDue || "—")}</span></p>
+    <div class="row">
+      ${r.active ? `<button class="btn primary" data-recpay="${esc(r.id)}">Record payment</button>` : ""}
+      <button class="btn link" data-recedit="${esc(r.id)}">Edit</button>
+      <button class="btn link" data-rectoggle="${esc(r.id)}">${r.active ? "Pause" : "Resume"}</button>
+      <button class="btn link" data-recdel="${esc(r.id)}">Delete</button>
+    </div>
+  </div>`;
+}
+
+function bindRecButtons(root) {
+  root.querySelectorAll("[data-recpay]").forEach((b) => {
+    b.onclick = () => { recordPayment(b.dataset.recpay); refreshAll(); };
+  });
+  root.querySelectorAll("[data-recedit]").forEach((b) => {
+    b.onclick = () => {
+      const r = getRecurring().find((x) => x.id === b.dataset.recedit);
+      if (!r) return;
+      document.getElementById("rec-id").value = r.id;
+      document.getElementById("rec-name").value = r.name;
+      document.getElementById("rec-amount").value = koboToInput(r.amountKobo);
+      refreshRecCategorySelect();
+      document.getElementById("rec-category").value = r.categoryId;
+      document.getElementById("rec-freq").value = r.frequency;
+      document.getElementById("rec-days").value = r.intervalDays || 30;
+      document.getElementById("rec-days-wrap").classList.toggle("hidden", r.frequency !== "custom");
+      document.getElementById("rec-next").value = r.nextDue || "";
+      document.getElementById("rec-notes").value = r.notes || "";
+      document.getElementById("rec-form-title").textContent = "Edit Recurring Expense";
+      document.getElementById("rec-cancel").classList.remove("hidden");
+      document.getElementById("rec-name").focus();
+    };
+  });
+  root.querySelectorAll("[data-rectoggle]").forEach((b) => {
+    b.onclick = () => { toggleRecurring(b.dataset.rectoggle); refreshAll(); };
+  });
+  root.querySelectorAll("[data-recdel]").forEach((b) => {
+    b.onclick = () => {
+      const r = getRecurring().find((x) => x.id === b.dataset.recdel);
+      if (!r) return;
+      if (!confirm(`Delete the "${r.name}" schedule? Past expenses stay.`)) return;
+      deleteRecurring(r.id);
+      refreshAll();
+    };
+  });
+}
+
+export function refreshRecCategorySelect() {
+  document.getElementById("rec-category").innerHTML = state.categories
+    .map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+}
+
+function recFormError(msg) {
+  const el = document.getElementById("rec-error");
+  if (!msg) { el.textContent = ""; el.classList.add("hidden"); return; }
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+
+export function resetRecForm() {
+  document.getElementById("rec-id").value = "";
+  document.getElementById("rec-name").value = "";
+  document.getElementById("rec-amount").value = "";
+  document.getElementById("rec-freq").value = "monthly";
+  document.getElementById("rec-days").value = "30";
+  document.getElementById("rec-days-wrap").classList.add("hidden");
+  document.getElementById("rec-next").value = "";
+  document.getElementById("rec-notes").value = "";
+  document.getElementById("rec-form-title").textContent = "New Recurring Expense";
+  document.getElementById("rec-cancel").classList.add("hidden");
+  recFormError(null);
+}
+
+export function saveRecFromForm() {
+  const res = upsertRecurring({
+    id: document.getElementById("rec-id").value || undefined,
+    name: document.getElementById("rec-name").value,
+    amount: document.getElementById("rec-amount").value,
+    categoryId: document.getElementById("rec-category").value,
+    frequency: document.getElementById("rec-freq").value,
+    intervalDays: document.getElementById("rec-days").value,
+    nextDue: document.getElementById("rec-next").value,
+    notes: document.getElementById("rec-notes").value,
+  });
+  if (res.error) { recFormError(res.error); return; }
+  resetRecForm();
+  refreshAll();
+}
+
+export function refreshRecurring() {
+  refreshRecCategorySelect();
+  const today = todayLocal();
+  const items = getRecurring();
+  const order = { overdue: 0, due: 1, soon: 2, later: 3, paused: 4 };
+  const dueNow = items.filter((r) => ["overdue", "due", "soon"].includes(dueStatus(r, today)))
+    .sort((a, b) => order[dueStatus(a, today)] - order[dueStatus(b, today)] || (a.nextDue || "").localeCompare(b.nextDue || ""));
+  const dueEl = document.getElementById("rec-due");
+  dueEl.innerHTML = dueNow.length
+    ? dueNow.map(recRow).join("")
+    : `<p class="muted">Nothing due in the next 7 days. Well planned.</p>`;
+  bindRecButtons(dueEl);
+  const listEl = document.getElementById("rec-list");
+  listEl.innerHTML = items.length
+    ? [...items].sort((a, b) => (a.nextDue || "").localeCompare(b.nextDue || "")).map(recRow).join("")
+    : `<p class="muted">No schedules yet. Add rent, electricity, internet, subscriptions below.</p>`;
+  bindRecButtons(listEl);
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
@@ -783,6 +910,7 @@ export function refreshAll() {
   refreshBudget();
   refreshSavings();
   refreshCalendar();
+  refreshRecurring();
   refreshReports();
   refreshSettings();
 }
