@@ -1,0 +1,5 @@
+# Naija Ledger on Netlify — static frontend (localStorage app).
+# The local Postgres/Better Auth backend in server/ is NOT hosted here.
+[build]
+  publish = "."
+  command = "echo 'static site, no build step'"
