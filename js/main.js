@@ -8,7 +8,7 @@ import {
   saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs,
   exportJson, exportCsv, importCsvFile, resetAllData,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
-  saveGoalFromForm, resetGoalForm,
+  saveGoalFromForm, resetGoalForm, shiftCalMonth, resetCalMonth,
   setRefreshHook, setResetHook,
 } from "./ui.js";
 
@@ -157,6 +157,9 @@ document.getElementById("saved-add").onclick = saveCurrentFilter;
 document.getElementById("month-prev").onclick = () => shiftViewMonth(-1);
 document.getElementById("month-next").onclick = () => shiftViewMonth(1);
 document.getElementById("month-reset").onclick = resetViewMonth;
+document.getElementById("cal-prev").onclick = () => shiftCalMonth(-1);
+document.getElementById("cal-next").onclick = () => shiftCalMonth(1);
+document.getElementById("cal-reset").onclick = resetCalMonth;
 
 // ---------- Budget / settings (static controls) ----------
 document.getElementById("save-monthly-budget").onclick = saveMonthlyBudgetFromInput;

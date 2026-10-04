@@ -36,6 +36,7 @@
     <button data-tab="budget" id="tabbtn-budget" class="tab" role="tab" aria-selected="false" aria-controls="tab-budget">Budget</button>
     <button data-tab="savings" id="tabbtn-savings" class="tab" role="tab" aria-selected="false" aria-controls="tab-savings">Savings</button>
     <button data-tab="reports" id="tabbtn-reports" class="tab" role="tab" aria-selected="false" aria-controls="tab-reports">Reports</button>
+    <button data-tab="calendar" id="tabbtn-calendar" class="tab" role="tab" aria-selected="false" aria-controls="tab-calendar">Calendar</button>
     <button data-tab="settings" id="tabbtn-settings" class="tab" role="tab" aria-selected="false" aria-controls="tab-settings">Profile</button>
   </nav>
 
@@ -170,6 +171,24 @@
       <div class="card"><h3>Top Categories (This Month)</h3><div id="rep-top-cats"></div></div>
       <div class="card"><h3>Last 7 Days Pattern</h3><div id="rep-weekly"></div></div>
       <div class="card"><h3>Category Breakdown (This Month)</h3><div id="rep-breakdown"></div></div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section id="tab-calendar" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-calendar">
+      <div class="card">
+        <div class="row-between">
+          <button id="cal-prev" class="btn" aria-label="Previous month">‹</button>
+          <h3 id="cal-title" style="margin:0">Calendar</h3>
+          <button id="cal-next" class="btn" aria-label="Next month">›</button>
+        </div>
+        <button id="cal-reset" class="btn link hidden">Back to this month</button>
+        <div class="cal-grid" id="cal-grid" role="grid" aria-label="Spending calendar"></div>
+      </div>
+      <div class="card">
+        <h3 id="cal-day-title">Today</h3>
+        <p class="big" id="cal-day-total">₦0</p>
+        <div id="cal-day-list"></div>
+      </div>
     </section>
 
     <!-- SETTINGS -->

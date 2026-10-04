@@ -89,7 +89,30 @@ input, select, textarea {
 }
 label { font-size: 13px; display: block; }
 input[type="checkbox"] { width: auto; margin: 0 8px 0 0; padding: 0; transform: scale(1.25); accent-color: var(--green); align-self: center; flex-shrink: 0; }
-#month-prev, #month-next { min-width: 44px; font-size: 18px; line-height: 1; }
+#month-prev, #month-next, #cal-prev, #cal-next { min-width: 44px; font-size: 18px; line-height: 1; }
+
+/* ---------- Calendar ---------- */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+.cal-dow { text-align: center; font-size: 11px; color: var(--muted); padding: 4px 0; }
+.cal-day {
+  min-height: 56px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cal-day .d { font-weight: 700; font-size: 13px; }
+.cal-day .t { color: var(--green); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-day.blank { visibility: hidden; }
+.cal-day.today { outline: 2px solid var(--gold); outline-offset: 1px; }
+.cal-day.selected { background: var(--tint-financial); border-color: var(--green); }
+[data-theme="dark"] .cal-day.selected { background: #24402f; }
 #bulk-bar { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; justify-content: space-between; }
 #saved-list .chip { display: inline-flex; align-items: center; gap: 2px; }
 .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr auto; gap: 6px; }

@@ -4,6 +4,7 @@ import { esc, fmtKobo, koboToInput, parseAmountToKobo, todayLocal, addDaysStr, p
 import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, PAYMENT_METHODS } from "./expenses.js";
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
+import { buildMonthGrid, shiftMonthKey } from "./calendar.js";
 import { getGoals, getContributions, goalPct, remainingKobo, daysLeft, upsertGoal, deleteGoal, recordContribution, savingsTotals } from "./savings.js";
 
 // ---------- Category selects ----------
@@ -479,6 +480,64 @@ export function saveGoalFromForm() {
   refreshAll();
 }
 
+// ---------- Calendar ----------
+let calMonth = monthKey(todayLocal());
+let calDay = todayLocal();
+
+const CAL_MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+export function shiftCalMonth(delta) {
+  calMonth = shiftMonthKey(calMonth, delta);
+  refreshCalendar();
+}
+
+export function resetCalMonth() {
+  calMonth = monthKey(todayLocal());
+  calDay = todayLocal();
+  refreshCalendar();
+}
+
+export function selectCalDay(dateStr) {
+  calDay = dateStr;
+  refreshCalendar();
+}
+
+export function refreshCalendar() {
+  const [y, m] = calMonth.split("-").map(Number);
+  document.getElementById("cal-title").textContent = `${CAL_MONTH_NAMES[m - 1]} ${y}`;
+  document.getElementById("cal-reset").classList.toggle("hidden", calMonth === monthKey(todayLocal()));
+  const today = todayLocal();
+  const totals = {};
+  for (const e of state.expenses) {
+    if (monthKey(e.date) === calMonth) totals[e.date] = (totals[e.date] || 0) + (Number(e.amountKobo) || 0);
+  }
+  const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  document.getElementById("cal-grid").innerHTML =
+    dows.map((d) => `<div class="cal-dow">${d}</div>`).join("") +
+    buildMonthGrid(y, m).map((ds) => {
+      if (!ds) return `<div class="cal-day blank" aria-hidden="true"></div>`;
+      const dayNum = Number(ds.slice(8, 10));
+      const cls = "cal-day" + (ds === today ? " today" : "") + (ds === calDay ? " selected" : "");
+      const t = totals[ds] ? `<span class="t">${esc(fmtKobo(totals[ds], cur()))}</span>` : "";
+      return `<button class="${cls}" data-calday="${ds}" role="gridcell" aria-label="${ds}${totals[ds] ? ", spent " + fmtKobo(totals[ds], cur()) : ", no spending"}"><span class="d">${dayNum}</span>${t}</button>`;
+    }).join("");
+  document.getElementById("cal-grid").querySelectorAll("[data-calday]").forEach((b) => {
+    b.onclick = () => selectCalDay(b.dataset.calday);
+  });
+
+  const dayList = state.expenses.filter((e) => e.date === calDay);
+  const dayTotal = sumKobo(dayList);
+  document.getElementById("cal-day-title").textContent =
+    calDay === today ? "Today" : calDay === addDaysStr(today, -1) ? "Yesterday" : calDay;
+  document.getElementById("cal-day-total").textContent = fmtKobo(dayTotal, cur());
+  const el = document.getElementById("cal-day-list");
+  el.innerHTML = dayList.length
+    ? `<p class="muted">${dayList.length} expense${dayList.length === 1 ? "" : "s"}</p>` + sortedByRecency(dayList).map((e) => txnHtml(e)).join("")
+    : `<p class="muted">No expenses recorded for this day.</p>`;
+  bindTxnButtons(el);
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
@@ -723,6 +782,7 @@ export function refreshAll() {
   refreshTransactions();
   refreshBudget();
   refreshSavings();
+  refreshCalendar();
   refreshReports();
   refreshSettings();
 }
