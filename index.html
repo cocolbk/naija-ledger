@@ -144,6 +144,7 @@
         </label>
         <label>Currency <input id="set-currency" type="text" value="₦" maxlength="3" /></label>
         <button id="save-profile" class="btn primary">Save Profile</button>
+        <p id="settings-note" class="muted" role="status"></p>
       </div>
       <div class="card">
         <h3>Categories</h3>
@@ -159,6 +160,8 @@
         <div class="row">
           <button id="export-json" class="btn">Export JSON</button>
           <button id="export-csv" class="btn">Export CSV</button>
+          <label class="btn" for="import-csv" style="cursor:pointer">Import CSV</label>
+          <input id="import-csv" type="file" accept=".csv,text/csv" class="visually-hidden" />
           <button id="reset-data" class="btn danger">Reset all data</button>
         </div>
       </div>
@@ -181,7 +184,7 @@
         <button id="mode-detailed" class="btn mode">Detailed Expense</button>
       </div>
       <input type="hidden" id="exp-id" />
-      <label>Amount (₦) * <input id="exp-amount" type="number" min="1" step="1" placeholder="e.g. 2500" required /></label>
+      <label>Amount (₦) * <input id="exp-amount" type="number" min="0.01" step="0.01" placeholder="e.g. 2500" required /></label>
       <label>Category * <select id="exp-category"></select></label>
       <label>Description <input id="exp-description" type="text" placeholder="e.g. Lunch" /></label>
       <div id="detailed-fields">
@@ -206,10 +209,11 @@
         <button id="expense-save" class="btn primary">Save Expense</button>
         <button id="expense-delete" class="btn danger hidden">Delete</button>
       </div>
+      <p id="exp-error" class="error-text hidden" role="alert"></p>
     </div>
   </div>
 
   <footer><p>Naija Ledger MVP • Every Naira Counts.</p></footer>
-  <script src="app.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

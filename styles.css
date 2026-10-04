@@ -148,6 +148,7 @@ footer { text-align: center; color: var(--muted); padding: 18px; font-size: 12px
   font-size: 13px;
 }
 .chip.selected { background: var(--green); color: #fff; border-color: var(--green); }
+.error-text { color: var(--red); font-size: 13px; margin: 6px 0; }
 
 /* ---------- Extended palette (Phase 1 design system) ---------- */
 :root {

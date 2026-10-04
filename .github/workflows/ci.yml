@@ -10,13 +10,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: JS syntax check
-        run: node --check app.js
+      - name: JS syntax check (ES modules)
+        run: |
+          for f in js/*.js; do node --input-type=module --check < "$f" || exit 1; done
+          echo "All js modules parse."
       - name: Required files present (PRD must never be deleted)
         run: |
           test -f index.html
           test -f styles.css
-          test -f app.js
+          test -f js/main.js
           test -f README.md
           test -f IMPLEMENTATION_PLAN.md
           test -f Naija_Ledger_PRD.docx
@@ -29,10 +31,15 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
+          const path = require('path');
           const html = fs.readFileSync('index.html', 'utf8');
-          const js = fs.readFileSync('app.js', 'utf8');
-          const ids = [...js.matchAll(/getElementById\(\"([^\"]+)\"\)/g)].map(m => m[1]);
-          const dynamic = new Set(['ob-next', 'ob-back', 'ob-done', 'ob-monthly']); // rendered by renderOnboarding()
+          let ids = [];
+          for (const f of fs.readdirSync('js')) {
+            if (!f.endsWith('.js')) continue;
+            const src = fs.readFileSync(path.join('js', f), 'utf8');
+            ids.push(...[...src.matchAll(/getElementById\(\"([^\"]+)\"\)/g)].map(m => m[1]));
+          }
+          const dynamic = new Set(['ob-next', 'ob-back', 'ob-done', 'ob-monthly', 'ob-error', 'ob-budget-fields']); // rendered by renderOnboarding()
           const missing = [...new Set(ids)].filter(id => !dynamic.has(id) && !html.includes('id=\"' + id + '\"'));
           if (missing.length) { console.error('Missing IDs in index.html:', missing.join(', ')); process.exit(1); }
           console.log('All ' + ids.length + ' referenced IDs present.');

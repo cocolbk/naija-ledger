@@ -67,7 +67,7 @@ Target layout:
 /tests/
 ```
 
-## Phase 3 — Core hardening (1–2 weeks)
+## Phase 3 — Core hardening (✅ DONE Oct 2026 — app split into `js/` ES modules, kobo integers, local-date utils, central validation, inline errors, CSV import, XSS escaping, debounced budget inputs, versioned export, `start-all.ps1`)
 
 - Split `app.js` → `store.js, expenses.js, budgets.js, categories.js, reports.js, onboarding.js`.
 - Schema v2: `expenses {id, amountKobo, categoryId, owner: personal|business, date, time, paymentMethod, location, notes, receiptIds[], recurringId?}`, `budgets {monthlyKobo, categories{}}`, stub `savings{}, recurring{}`.

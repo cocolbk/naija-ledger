@@ -41,31 +41,36 @@ This initial version implements the PRD MVP scope:
 - **Reports (basic):** today vs yesterday, this month vs last month, top categories, last-7-days pattern, category breakdown
 - **Profile / settings:** name, profile type, currency (default ₦), category management, JSON/CSV export, reset data
 
-Data is stored locally in the browser via `localStorage` under the key `naijaLedger.v1`. No backend or account needed.
+Data is stored locally in the browser via `localStorage` under the key `naijaLedger.v2` (money as integer kobo; v1 data auto-migrates on first load). No backend or account needed for the static app.
 
 Deferred to Phase 2 per PRD: savings goals, advanced insights, calendar view, recurring expenses, notifications, receipt attachments, advanced reports.
 
 ## How to run the project
 
-No build step required. Static HTML/CSS/JS.
+One-click local start (Postgres + API serving the app):
 
-Option 1 — open directly:
-1. Open the project folder `naija ledger`
-2. Double-click `index.html` to open in Chrome / Edge / Firefox
+```powershell
+powershell -ExecutionPolicy Bypass -File start-all.ps1
+```
 
-Option 2 — serve locally (recommended, avoids file:// quirks):
+Then open `http://localhost:3000` in your browser.
+
+Manual alternative — serve the folder over HTTP (ES modules require HTTP, not `file://`):
+
 ```powershell
 # from the project folder
 npx serve .
-# or with Python, if installed:
-python -m http.server 8000
 ```
-Then visit `http://localhost:8000` (or the port shown).
+Then visit the shown URL. Or run the API from `server/` (`npm.cmd run dev`) which also serves the app at `http://localhost:3000`.
+
+Live demo: `https://naijaledger.netlify.app` (auto-deploys on every push to `main`).
 
 Files:
 - `index.html` — app structure and screens
-- `styles.css` — styling
-- `app.js` — all MVP logic
+- `styles.css` — styling (tokens, dark mode, category colors)
+- `js/` — app logic as ES modules: `store.js` (state + v1→v2 migration), `utils.js`, `expenses.js`, `budgets.js`, `reports.js`, `ui.js` (rendering), `main.js` (entry)
+- `design-system.html` — visual gallery of the design system
+- `server/` — local Hono + Better Auth + Drizzle API (Postgres, R2 client)
 - `Naija_Ledger_PRD.docx` — product requirements (source of truth, do not delete)
 - `README.md` — this file
 
