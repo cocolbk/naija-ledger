@@ -78,7 +78,7 @@ Target layout:
 - JSON versioned export + CSV import round-trip (export exists `app.js:471`).
 - Acceptance: Vitest green, zero `alert`/`prompt`, migration v1→v2 tested.
 
-## Phase 4 — MVP polish (PRD Sec 4–7,10,15,18,20–21)
+## Phase 4 — MVP polish (✅ DONE Oct 2026 — month navigation ‹ › + reset, 4 sort orders, 100-row paging with Show-more, bulk select + delete, named saved filters, View-today shortcut, checkbox styling)
 
 - Onboarding (`app.js:72`): progress indicator, skip path clears monthly, draft survives reload.
 - Dashboard: month switcher, correct `null` vs `0` budget handling (`app.js:244`).

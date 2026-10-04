@@ -27,6 +27,7 @@ export function defaultState() {
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c, custom: false })),
     expenses: [],
     budgets: { monthlyKobo: null, categories: {} },
+    savedFilters: [],
     onboardDraft: {
       profileType: "Personal",
       categoryIds: DEFAULT_CATEGORIES.map((c) => c.id),
@@ -76,7 +77,10 @@ function load() {
     const raw2 = localStorage.getItem(LS_V2);
     if (raw2) {
       const s = JSON.parse(raw2);
-      if (s && s.version === 2) return s;
+      if (s && s.version === 2) {
+        if (!Array.isArray(s.savedFilters)) s.savedFilters = [];
+        return s;
+      }
     }
     const raw1 = localStorage.getItem(LS_V1);
     if (raw1) {
@@ -85,7 +89,9 @@ function load() {
       return migrated;
     }
   } catch (e) { /* corrupted storage -> fresh state */ }
-  return defaultState();
+  const fresh = defaultState();
+  if (!Array.isArray(fresh.savedFilters)) fresh.savedFilters = [];
+  return fresh;
 }
 
 export let state = load();

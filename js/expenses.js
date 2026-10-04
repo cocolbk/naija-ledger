@@ -54,5 +54,20 @@ export function expensesForMonth(key) {
 }
 
 export function sortedByRecency(list) {
-  return [...list].sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || "")));
+  return sortTxns(list, "newest");
+}
+
+export function sortTxns(list, mode = "newest") {
+  const arr = [...list];
+  const key = (e) => (e.date || "") + (e.time || "") + (e.id || "");
+  switch (mode) {
+    case "oldest":
+      return arr.sort((a, b) => key(a).localeCompare(key(b)));
+    case "amount-desc":
+      return arr.sort((a, b) => b.amountKobo - a.amountKobo || key(b).localeCompare(key(a)));
+    case "amount-asc":
+      return arr.sort((a, b) => a.amountKobo - b.amountKobo || key(a).localeCompare(key(b)));
+    default:
+      return arr.sort((a, b) => key(b).localeCompare(key(a)));
+  }
 }

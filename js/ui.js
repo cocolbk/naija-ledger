@@ -1,7 +1,7 @@
 // All DOM rendering + modal + settings actions. No wiring of static buttons here (see main.js).
 import { state, save, resetState, cur, catById, categoryName } from "./store.js";
 import { esc, fmtKobo, koboToInput, parseAmountToKobo, todayLocal, addDaysStr, prevMonthKey, debounce, parseCsv, uid } from "./utils.js";
-import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, PAYMENT_METHODS } from "./expenses.js";
+import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, PAYMENT_METHODS } from "./expenses.js";
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
 
@@ -16,11 +16,12 @@ export function refreshCategorySelects() {
 }
 
 // ---------- Transactions ----------
-export function txnHtml(e) {
+export function txnHtml(e, selectable = false) {
   const c = catById(e.categoryId);
   const label = e.description || c.name;
   return `<div class="txn">
-    <div><div>${esc(c.icon)} ${esc(label)}</div>
+    ${selectable ? `<input type="checkbox" data-select="${esc(e.id)}" ${selectedIds.has(e.id) ? "checked" : ""} aria-label="Select ${esc(label)}" />` : ""}
+    <div style="flex:1"><div>${esc(c.icon)} ${esc(label)}</div>
     <div class="muted">${esc(c.name)} • ${esc(e.date)}${e.time ? " " + esc(e.time) : ""} • ${esc(e.paymentMethod || "")}</div></div>
     <div style="text-align:right"><div class="amt">${esc(fmtKobo(e.amountKobo, cur()))}</div>
     <div><button class="btn link" data-edit="${esc(e.id)}">Edit</button></div></div>
@@ -31,12 +32,48 @@ export function bindTxnButtons(root) {
   root.querySelectorAll("[data-edit]").forEach((b) => {
     b.onclick = () => openExpenseModal(b.dataset.edit);
   });
+  root.querySelectorAll("[data-select]").forEach((box) => {
+    box.onchange = () => {
+      if (box.checked) selectedIds.add(box.dataset.select);
+      else selectedIds.delete(box.dataset.select);
+      renderBulkBar();
+    };
+  });
+  const more = root.querySelector("[data-more]");
+  if (more) more.onclick = () => showMoreTransactions();
+}
+
+// ---------- View month (dashboard + budget follow this) ----------
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+let viewMonth = monthKey(todayLocal());
+
+export function monthLabel(mk) {
+  if (mk === monthKey(todayLocal())) return "This Month";
+  const [y, m] = mk.split("-").map(Number);
+  return `${MONTH_NAMES[m - 1]} ${y}`;
+}
+
+export function shiftViewMonth(delta) {
+  let [y, m] = viewMonth.split("-").map(Number);
+  m += delta;
+  while (m < 1) { m += 12; y -= 1; }
+  while (m > 12) { m -= 12; y += 1; }
+  viewMonth = `${y}-${String(m).padStart(2, "0")}`;
+  refreshDashboard();
+  refreshBudget();
+}
+
+export function resetViewMonth() {
+  viewMonth = monthKey(todayLocal());
+  refreshDashboard();
+  refreshBudget();
 }
 
 // ---------- Dashboard ----------
 export function refreshDashboard() {
   const t = todayLocal();
-  const mk = monthKey(t);
+  const mk = viewMonth;
   const todays = state.expenses.filter((e) => e.date === t);
   const months = expensesForMonth(mk);
   const tTotal = sumKobo(todays);
@@ -45,6 +82,9 @@ export function refreshDashboard() {
   document.getElementById("today-total").textContent = fmtKobo(tTotal, cur());
   document.getElementById("today-count").textContent = `${todays.length} transaction${todays.length === 1 ? "" : "s"}`;
   document.getElementById("month-total").textContent = fmtKobo(mTotal, cur());
+  document.getElementById("month-title").textContent = `Monthly Spending — ${monthLabel(mk)}`;
+  document.getElementById("month-reset").classList.toggle("hidden", mk === monthKey(todayLocal()));
+  document.getElementById("cat-summary-title").textContent = `Category Summary (${monthLabel(mk)})`;
 
   const mb = state.budgets.monthlyKobo;
   const prog = document.getElementById("month-progress");
@@ -80,47 +120,157 @@ export function refreshDashboard() {
   bindTxnButtons(document.getElementById("recent-list"));
 }
 
-// ---------- Transaction history + filters ----------
-export function refreshTransactions() {
-  const q = document.getElementById("f-search").value.toLowerCase();
-  const fc = document.getElementById("f-category").value;
-  const fp = document.getElementById("f-payment").value;
-  const from = document.getElementById("f-from").value;
-  const to = document.getElementById("f-to").value;
-  const minK = parseAmountToKobo(document.getElementById("f-min").value || "") ?? 0;
-  const maxRaw = document.getElementById("f-max").value;
-  const maxK = maxRaw.trim() === "" ? Infinity : (parseAmountToKobo(maxRaw) ?? Infinity);
+// ---------- Transaction history + filters/sort/paging/bulk/saved ----------
+const PAGE = 100;
+let txnLimit = PAGE;
+const selectedIds = new Set();
 
-  let list = sortedByRecency(state.expenses);
-  list = list.filter((e) => {
+export function currentFilters() {
+  return {
+    q: document.getElementById("f-search").value,
+    category: document.getElementById("f-category").value,
+    payment: document.getElementById("f-payment").value,
+    from: document.getElementById("f-from").value,
+    to: document.getElementById("f-to").value,
+    min: document.getElementById("f-min").value,
+    max: document.getElementById("f-max").value,
+    sort: document.getElementById("f-sort").value || "newest",
+  };
+}
+
+export function applyFiltersToInputs(f) {
+  document.getElementById("f-search").value = f.q || "";
+  document.getElementById("f-category").value = f.category || "";
+  document.getElementById("f-payment").value = f.payment || "";
+  document.getElementById("f-from").value = f.from || "";
+  document.getElementById("f-to").value = f.to || "";
+  document.getElementById("f-min").value = f.min || "";
+  document.getElementById("f-max").value = f.max || "";
+  document.getElementById("f-sort").value = f.sort || "newest";
+}
+
+export function filteredTxns() {
+  const f = currentFilters();
+  const q = (f.q || "").toLowerCase();
+  const minK = parseAmountToKobo(f.min || "") ?? 0;
+  const maxK = (f.max || "").trim() === "" ? Infinity : (parseAmountToKobo(f.max) ?? Infinity);
+  const list = state.expenses.filter((e) => {
     const c = catById(e.categoryId);
     const hay = `${e.description || ""} ${c.name} ${e.location || ""} ${e.paymentMethod || ""}`.toLowerCase();
     if (q && !hay.includes(q)) return false;
-    if (fc && e.categoryId !== fc) return false;
-    if (fp && e.paymentMethod !== fp) return false;
-    if (from && e.date < from) return false;
-    if (to && e.date > to) return false;
+    if (f.category && e.categoryId !== f.category) return false;
+    if (f.payment && e.paymentMethod !== f.payment) return false;
+    if (f.from && e.date < f.from) return false;
+    if (f.to && e.date > f.to) return false;
     if (e.amountKobo < minK || e.amountKobo > maxK) return false;
     return true;
   });
+  return sortTxns(list, f.sort);
+}
+
+export function refreshTransactions(resetLimit = true) {
+  if (resetLimit) txnLimit = PAGE;
+  for (const id of [...selectedIds]) {
+    if (!state.expenses.some((e) => e.id === id)) selectedIds.delete(id);
+  }
+  const list = filteredTxns();
   const el = document.getElementById("txn-list");
+  const shown = list.slice(0, txnLimit);
   el.innerHTML = list.length
-    ? `<p class="muted">${list.length} result${list.length === 1 ? "" : "s"} • Total: ${esc(fmtKobo(sumKobo(list), cur()))}</p>` + list.map(txnHtml).join("")
+    ? `<p class="muted">${list.length} result${list.length === 1 ? "" : "s"} • Total: ${esc(fmtKobo(sumKobo(list), cur()))}</p>`
+      + shown.map((e) => txnHtml(e, true)).join("")
+      + (list.length > txnLimit
+        ? `<button class="btn" data-more="1">Show ${Math.min(PAGE, list.length - txnLimit)} more (${list.length - txnLimit} remaining)</button>` : "")
     : `<p class="muted">No transactions match.</p>`;
   bindTxnButtons(el);
+  renderBulkBar();
+  renderSavedFilters();
+}
+
+export function showMoreTransactions() {
+  txnLimit += PAGE;
+  refreshTransactions(false);
+}
+
+export function showTodayTransactions() {
+  applyFiltersToInputs({ from: todayLocal(), to: todayLocal(), sort: "newest" });
+  txnLimit = PAGE;
+  selectedIds.clear();
+  refreshTransactions();
 }
 
 export function clearFilters() {
-  ["f-search", "f-category", "f-payment", "f-from", "f-to", "f-min", "f-max"].forEach((id) => {
-    document.getElementById(id).value = "";
-  });
+  applyFiltersToInputs({ sort: "newest" });
+  selectedIds.clear();
   refreshTransactions();
+}
+
+// ---------- Bulk select + delete ----------
+export function renderBulkBar() {
+  const bar = document.getElementById("bulk-bar");
+  if (!bar) return;
+  bar.classList.toggle("hidden", selectedIds.size === 0);
+  document.getElementById("bulk-count").textContent =
+    `${selectedIds.size} selected • ${fmtKobo(sumKobo(state.expenses.filter((e) => selectedIds.has(e.id))), cur())}`;
+}
+
+export function bulkDeleteSelected() {
+  if (!selectedIds.size) return;
+  if (!confirm(`Delete ${selectedIds.size} selected expense${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
+  state.expenses = state.expenses.filter((e) => !selectedIds.has(e.id));
+  save();
+  selectedIds.clear();
+  refreshAll();
+}
+
+// ---------- Saved filters ----------
+function getSavedFilters() {
+  if (!Array.isArray(state.savedFilters)) state.savedFilters = [];
+  return state.savedFilters;
+}
+
+export function saveCurrentFilter() {
+  const nameInput = document.getElementById("saved-name");
+  const name = nameInput.value.trim().slice(0, 40);
+  if (!name) { nameInput.setCustomValidity("Name this filter first."); nameInput.reportValidity(); return; }
+  nameInput.setCustomValidity("");
+  getSavedFilters().push({ id: uid(), name, filters: currentFilters() });
+  nameInput.value = "";
+  save();
+  renderSavedFilters();
+}
+
+export function renderSavedFilters() {
+  const el = document.getElementById("saved-list");
+  if (!el) return;
+  const saved = getSavedFilters();
+  el.innerHTML = saved.length
+    ? saved.map((s) => `<span class="chip" style="cursor:default">${esc(s.name)}
+        <button class="btn link" data-sapply="${esc(s.id)}">Apply</button>
+        <button class="btn link" data-sdel="${esc(s.id)}" aria-label="Delete saved filter ${esc(s.name)}">✕</button></span>`).join("")
+    : `<span class="muted">No saved filters yet.</span>`;
+  el.querySelectorAll("[data-sapply]").forEach((b) => {
+    b.onclick = () => {
+      const s = getSavedFilters().find((x) => x.id === b.dataset.sapply);
+      if (!s) return;
+      applyFiltersToInputs(s.filters);
+      selectedIds.clear();
+      refreshTransactions();
+    };
+  });
+  el.querySelectorAll("[data-sdel]").forEach((b) => {
+    b.onclick = () => {
+      state.savedFilters = getSavedFilters().filter((x) => x.id !== b.dataset.sdel);
+      save();
+      renderSavedFilters();
+    };
+  });
 }
 
 // ---------- Budget ----------
 export function refreshBudget() {
   const mb = state.budgets.monthlyKobo;
-  const mk = monthKey(todayLocal());
+  const mk = viewMonth;
   const mTotal = totalsForMonth(mk);
   document.getElementById("budget-monthly-display").textContent = mb ? fmtKobo(mb, cur()) : "Not set";
   document.getElementById("monthly-budget-input").value = mb ? koboToInput(mb) : "";

@@ -88,6 +88,10 @@ input, select, textarea {
   font-size: 14px;
 }
 label { font-size: 13px; display: block; }
+input[type="checkbox"] { width: auto; margin: 0 8px 0 0; padding: 0; transform: scale(1.25); accent-color: var(--green); align-self: center; flex-shrink: 0; }
+#month-prev, #month-next { min-width: 44px; font-size: 18px; line-height: 1; }
+#bulk-bar { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; justify-content: space-between; }
+#saved-list .chip { display: inline-flex; align-items: center; gap: 2px; }
 .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr auto; gap: 6px; }
 @media (max-width: 900px) { .filters { grid-template-columns: 1fr 1fr; } }
 .progress { background: #eee; border-radius: 8px; height: 10px; overflow: hidden; margin: 8px 0; }

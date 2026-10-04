@@ -3,10 +3,11 @@ import { state, save, PROFILE_TYPES, DEFAULT_CATEGORIES } from "./store.js";
 import { parseAmountToKobo } from "./utils.js";
 import { clearMonthlyBudget } from "./budgets.js";
 import {
-  refreshAll, refreshTransactions, clearFilters,
+  refreshAll, refreshTransactions, clearFilters, showTodayTransactions,
   openExpenseModal, closeExpenseModal, setExpMode, saveExpenseFromModal, deleteExpenseFromModal,
   saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs,
   exportJson, exportCsv, importCsvFile, resetAllData,
+  shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
   setRefreshHook, setResetHook,
 } from "./ui.js";
 
@@ -22,7 +23,10 @@ export function showTab(name) {
   });
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + name));
 }
-document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.goto)));
+document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => {
+  if (b.dataset.filterToday) showTodayTransactions();
+  showTab(b.dataset.goto);
+}));
 
 // ---------- Theme ----------
 function applyTheme() {
@@ -141,10 +145,17 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ---------- Transactions filters ----------
-["f-search", "f-category", "f-payment", "f-from", "f-to", "f-min", "f-max"].forEach((id) =>
+["f-search", "f-category", "f-payment", "f-from", "f-to", "f-min", "f-max", "f-sort"].forEach((id) =>
   document.getElementById(id).addEventListener("input", refreshTransactions)
 );
 document.getElementById("f-clear").onclick = clearFilters;
+document.getElementById("bulk-delete").onclick = bulkDeleteSelected;
+document.getElementById("saved-add").onclick = saveCurrentFilter;
+
+// ---------- Month navigation ----------
+document.getElementById("month-prev").onclick = () => shiftViewMonth(-1);
+document.getElementById("month-next").onclick = () => shiftViewMonth(1);
+document.getElementById("month-reset").onclick = resetViewMonth;
 
 // ---------- Budget / settings (static controls) ----------
 document.getElementById("save-monthly-budget").onclick = saveMonthlyBudgetFromInput;
