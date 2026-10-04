@@ -5,6 +5,7 @@ import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecen
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
 import { buildMonthGrid, shiftMonthKey } from "./calendar.js";
+import { generateInsights } from "./insights.js";
 import { getRecurring, FREQUENCIES, dueStatus, upsertRecurring, deleteRecurring, toggleRecurring, recordPayment } from "./recurring.js";
 import { getGoals, getContributions, goalPct, remainingKobo, daysLeft, upsertGoal, deleteGoal, recordContribution, savingsTotals } from "./savings.js";
 
@@ -341,6 +342,11 @@ export function saveMonthlyBudgetFromInput() {
 // ---------- Reports ----------
 export function refreshReports() {
   const ts = todayLocal();
+  const names = Object.fromEntries(state.categories.map((c) => [c.id, `${c.icon} ${c.name}`]));
+  document.getElementById("insights-list").innerHTML = generateInsights({
+    expenses: state.expenses, monthlyKobo: state.budgets.monthlyKobo, today: ts, currency: cur(), names,
+  }).map((i) => `<div class="cat-row"><span>${esc(i.icon)}</span><span style="flex:1">${esc(i.text)}</span></div>`).join("");
+
   const ys = addDaysStr(ts, -1);
   const tTotal = sumKobo(state.expenses.filter((e) => e.date === ts));
   const yTotal = sumKobo(state.expenses.filter((e) => e.date === ys));
