@@ -1,7 +1,7 @@
 // All DOM rendering + modal + settings actions. No wiring of static buttons here (see main.js).
 import { state, save, resetState, cur, catById, categoryName } from "./store.js";
 import { esc, fmtKobo, koboToInput, parseAmountToKobo, todayLocal, addDaysStr, prevMonthKey, debounce, parseCsv, uid } from "./utils.js";
-import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, PAYMENT_METHODS } from "./expenses.js";
+import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, inWallet, visibleExpenses, walletById, PAYMENT_METHODS } from "./expenses.js";
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
 import { buildMonthGrid, shiftMonthKey } from "./calendar.js";
@@ -17,6 +17,27 @@ export function refreshCategorySelects() {
   const prev = f.value;
   f.innerHTML = `<option value="">All categories</option>` + opts;
   f.value = prev;
+}
+
+export function refreshWalletOptions() {
+  const opts = `<option value="">All wallets</option>` + state.wallets
+    .map((w) => `<option value="${esc(w.id)}">${esc(w.icon)} ${esc(w.name)}</option>`).join("");
+  const f = document.getElementById("f-wallet");
+  if (f) {
+    const filterVal = currentFiltersSafe();
+    f.innerHTML = opts;
+    f.value = filterVal;
+  }
+  const sw = document.getElementById("wallet-switch");
+  if (sw) {
+    sw.innerHTML = opts;
+    sw.value = state.activeWalletId || "";
+  }
+}
+
+function currentFiltersSafe() {
+  try { return document.getElementById("f-wallet").value || ""; }
+  catch (e) { return ""; }
 }
 
 // ---------- Transactions ----------
@@ -78,8 +99,9 @@ export function resetViewMonth() {
 export function refreshDashboard() {
   const t = todayLocal();
   const mk = viewMonth;
-  const todays = state.expenses.filter((e) => e.date === t);
-  const months = expensesForMonth(mk);
+  const inScope = visibleExpenses();
+  const todays = inScope.filter((e) => e.date === t);
+  const months = inScope.filter((e) => monthKey(e.date) === mk);
   const tTotal = sumKobo(todays);
   const mTotal = sumKobo(months);
 
@@ -117,7 +139,7 @@ export function refreshDashboard() {
       }).join("")
     : `<p class="muted">No spending this month yet. Tap + Add Expense.</p>`;
 
-  const recent = sortedByRecency(state.expenses).slice(0, 5);
+  const recent = sortedByRecency(inScope).slice(0, 5);
   document.getElementById("recent-list").innerHTML = recent.length
     ? recent.map(txnHtml).join("")
     : `<p class="muted">No transactions yet.</p>`;
@@ -138,6 +160,7 @@ export function currentFilters() {
     to: document.getElementById("f-to").value,
     min: document.getElementById("f-min").value,
     max: document.getElementById("f-max").value,
+    wallet: document.getElementById("f-wallet").value,
     sort: document.getElementById("f-sort").value || "newest",
   };
 }
@@ -150,6 +173,8 @@ export function applyFiltersToInputs(f) {
   document.getElementById("f-to").value = f.to || "";
   document.getElementById("f-min").value = f.min || "";
   document.getElementById("f-max").value = f.max || "";
+  const wsel = document.getElementById("f-wallet");
+  if (wsel) wsel.value = f.wallet || "";
   document.getElementById("f-sort").value = f.sort || "newest";
 }
 
@@ -163,6 +188,7 @@ export function filteredTxns() {
     const hay = `${e.description || ""} ${c.name} ${e.location || ""} ${e.paymentMethod || ""}`.toLowerCase();
     if (q && !hay.includes(q)) return false;
     if (f.category && e.categoryId !== f.category) return false;
+    if (f.wallet && (e.walletId || "main") !== f.wallet) return false;
     if (f.payment && e.paymentMethod !== f.payment) return false;
     if (f.from && e.date < f.from) return false;
     if (f.to && e.date > f.to) return false;
@@ -275,7 +301,8 @@ export function renderSavedFilters() {
 export function refreshBudget() {
   const mb = state.budgets.monthlyKobo;
   const mk = viewMonth;
-  const mTotal = totalsForMonth(mk);
+  const inScopeMonth = visibleExpenses().filter((e) => monthKey(e.date) === mk);
+  const mTotal = sumKobo(inScopeMonth);
   document.getElementById("budget-monthly-display").textContent = mb ? fmtKobo(mb, cur()) : "Not set";
   document.getElementById("monthly-budget-input").value = mb ? koboToInput(mb) : "";
   const prog = document.getElementById("budget-monthly-progress");
@@ -303,7 +330,7 @@ export function refreshBudget() {
     alertEl.className = "alert hidden";
   }
 
-  const catTotals = Object.fromEntries(byCategory(expensesForMonth(mk)));
+  const catTotals = Object.fromEntries(byCategory(inScopeMonth));
   document.getElementById("category-budgets").innerHTML = state.categories.map((c) => {
     const spent = catTotals[c.id] || 0;
     const b = state.budgets.categories[c.id] || "";
@@ -342,24 +369,26 @@ export function saveMonthlyBudgetFromInput() {
 // ---------- Reports ----------
 export function refreshReports() {
   const ts = todayLocal();
+  const inScope = visibleExpenses();
   const names = Object.fromEntries(state.categories.map((c) => [c.id, `${c.icon} ${c.name}`]));
   document.getElementById("insights-list").innerHTML = generateInsights({
-    expenses: state.expenses, monthlyKobo: state.budgets.monthlyKobo, today: ts, currency: cur(), names,
+    expenses: inScope, monthlyKobo: state.budgets.monthlyKobo, today: ts, currency: cur(), names,
   }).map((i) => `<div class="cat-row"><span>${esc(i.icon)}</span><span style="flex:1">${esc(i.text)}</span></div>`).join("");
 
   const ys = addDaysStr(ts, -1);
-  const tTotal = sumKobo(state.expenses.filter((e) => e.date === ts));
-  const yTotal = sumKobo(state.expenses.filter((e) => e.date === ys));
+  const tTotal = sumKobo(inScope.filter((e) => e.date === ts));
+  const yTotal = sumKobo(inScope.filter((e) => e.date === ys));
   document.getElementById("rep-today-yesterday").innerHTML =
     `<p>Today: <strong>${esc(fmtKobo(tTotal, cur()))}</strong><br/>Yesterday: <strong>${esc(fmtKobo(yTotal, cur()))}</strong><br/><span class="muted">${tTotal >= yTotal ? "Up" : "Down"} by ${esc(fmtKobo(Math.abs(tTotal - yTotal), cur()))}</span></p>`;
 
   const mk = monthKey(ts);
-  const mTotal = totalsForMonth(mk);
-  const pTotal = totalsForMonth(prevMonthKey(mk));
+  const inScopeMonth = inScope.filter((e) => monthKey(e.date) === mk);
+  const mTotal = sumKobo(inScopeMonth);
+  const pTotal = sumKobo(inScope.filter((e) => monthKey(e.date) === prevMonthKey(mk)));
   document.getElementById("rep-month-compare").innerHTML =
     `<p>This month: <strong>${esc(fmtKobo(mTotal, cur()))}</strong><br/>Last month: <strong>${esc(fmtKobo(pTotal, cur()))}</strong></p>`;
 
-  const sorted = byCategory(expensesForMonth(mk));
+  const sorted = byCategory(inScopeMonth);
   document.getElementById("rep-top-cats").innerHTML = sorted.length
     ? sorted.slice(0, 5).map(([cid, total]) => `<div class="cat-row"><span>${esc(catById(cid).icon)} ${esc(catById(cid).name)}</span><strong>${esc(fmtKobo(total, cur()))}</strong></div>`).join("")
     : `<p class="muted">No data.</p>`;
@@ -370,7 +399,7 @@ export function refreshReports() {
       }).join("")
     : `<p class="muted">No data.</p>`;
 
-  document.getElementById("rep-weekly").innerHTML = dailyTotals(ts, 7)
+  document.getElementById("rep-weekly").innerHTML = dailyTotals(ts, 7, inScope)
     .map(({ date, total }) => `<div class="cat-row"><span>${esc(date)}</span><strong>${esc(fmtKobo(total, cur()))}</strong></div>`)
     .join("");
 }
@@ -516,7 +545,7 @@ export function refreshCalendar() {
   document.getElementById("cal-reset").classList.toggle("hidden", calMonth === monthKey(todayLocal()));
   const today = todayLocal();
   const totals = {};
-  for (const e of state.expenses) {
+  for (const e of visibleExpenses()) {
     if (monthKey(e.date) === calMonth) totals[e.date] = (totals[e.date] || 0) + (Number(e.amountKobo) || 0);
   }
   const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -533,7 +562,7 @@ export function refreshCalendar() {
     b.onclick = () => selectCalDay(b.dataset.calday);
   });
 
-  const dayList = state.expenses.filter((e) => e.date === calDay);
+  const dayList = visibleExpenses().filter((e) => e.date === calDay);
   const dayTotal = sumKobo(dayList);
   document.getElementById("cal-day-title").textContent =
     calDay === today ? "Today" : calDay === addDaysStr(today, -1) ? "Yesterday" : calDay;
@@ -671,11 +700,71 @@ export function refreshRecurring() {
   bindRecButtons(listEl);
 }
 
+// ---------- Wallets ----------
+export function setActiveWallet(id) {
+  state.activeWalletId = id || null;
+  save();
+  refreshAll();
+}
+
+export function refreshWalletsSettings() {
+  const el = document.getElementById("settings-wallets");
+  if (!el) return;
+  el.innerHTML = state.wallets.map((w) => {
+    const n = state.expenses.filter((e) => (e.walletId || "main") === w.id).length;
+    return `<div class="cat-row"><span>${esc(w.icon)} ${esc(w.name)} <span class="muted">(${n} expense${n === 1 ? "" : "s"})</span></span>
+    <span><input data-wrename="${esc(w.id)}" value="${esc(w.name)}" maxlength="40" style="max-width:150px" aria-label="Rename ${esc(w.name)}" />
+    <button class="btn link" data-wdel="${esc(w.id)}">Remove</button></span></div>`;
+  }).join("");
+  el.querySelectorAll("[data-wrename]").forEach((inp) => {
+    inp.addEventListener("change", () => {
+      const w = walletById(inp.dataset.wrename);
+      if (!w || !w.id || w.id !== inp.dataset.wrename) return;
+      const v = inp.value.trim().slice(0, 40);
+      if (!v) { inp.value = w.name; return; }
+      w.name = v;
+      save();
+      refreshAll();
+    });
+  });
+  el.querySelectorAll("[data-wdel]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.wdel;
+      if (state.wallets.length <= 1) { setSettingsNote("Keep at least one wallet."); return; }
+      if (state.expenses.some((e) => (e.walletId || "main") === id)) {
+        setSettingsNote("Cannot remove a wallet that has expenses. Delete or reassign those first.");
+        return;
+      }
+      if (!confirm("Remove this wallet?")) return;
+      state.wallets = state.wallets.filter((w) => w.id !== id);
+      if (state.activeWalletId === id) state.activeWalletId = null;
+      save();
+      refreshAll();
+    };
+  });
+}
+
+export function addWalletFromInputs() {
+  const name = document.getElementById("new-wallet-name").value.trim().slice(0, 40);
+  const icon = document.getElementById("new-wallet-icon").value.trim() || "👛";
+  if (!name) { setSettingsNote("Enter a wallet name."); return; }
+  if (state.wallets.some((w) => w.name.toLowerCase() === name.toLowerCase())) {
+    setSettingsNote("That wallet already exists.");
+    return;
+  }
+  state.wallets.push({ id: uid(), name, icon });
+  document.getElementById("new-wallet-name").value = "";
+  document.getElementById("new-wallet-icon").value = "";
+  save();
+  refreshAll();
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
   document.getElementById("set-profile").value = state.user.profileType || "Personal";
   document.getElementById("set-currency").value = cur();
+  refreshWalletsSettings();
   document.getElementById("settings-categories").innerHTML = state.categories.map((c) => `
     <div class="cat-row"><span>${esc(c.icon)} ${esc(c.name)}${c.custom ? ' <span class="muted">(custom)</span>' : ""}</span>
     <span><input data-rename="${esc(c.id)}" value="${esc(c.name)}" maxlength="40" style="max-width:150px" aria-label="Rename ${esc(c.name)}" />
@@ -752,9 +841,9 @@ function csvCell(v) {
 }
 
 export function exportCsv() {
-  const rows = [["id", "amount", "category", "description", "date", "time", "paymentMethod", "location", "notes"]];
+  const rows = [["id", "amount", "category", "wallet", "description", "date", "time", "paymentMethod", "location", "notes"]];
   for (const e of state.expenses) {
-    rows.push([e.id, ((Number(e.amountKobo) || 0) / 100).toString(), categoryName(e.categoryId),
+    rows.push([e.id, ((Number(e.amountKobo) || 0) / 100).toString(), categoryName(e.categoryId), walletById(e.walletId || "main").name,
       e.description || "", e.date, e.time || "", e.paymentMethod || "", e.location || "", e.notes || ""]);
   }
   const blob = new Blob([rows.map((r) => r.map(csvCell).join(",")).join("\n")], { type: "text/csv" });
@@ -786,9 +875,14 @@ export function importCsvFile(file) {
         if (kobo === null || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { skipped++; continue; }
         const catName = (r[idx("category")] || "").trim().toLowerCase();
         const match = state.categories.find((c) => c.name.toLowerCase() === catName);
+        let walletId = state.activeWalletId || "main";
+        if (idx("wallet") >= 0 && (r[idx("wallet")] || "").trim()) {
+          const wmatch = state.wallets.find((w) => w.name.toLowerCase() === (r[idx("wallet")] || "").trim().toLowerCase());
+          if (wmatch) walletId = wmatch.id;
+        }
         const now = new Date().toISOString();
         state.expenses.push({
-          id: uid(), amountKobo: kobo, categoryId: match ? match.id : "other",
+          id: uid(), amountKobo: kobo, categoryId: match ? match.id : "other", walletId,
           description: idx("description") >= 0 ? (r[idx("description")] || "").slice(0, 120) : "",
           date, time: idx("time") >= 0 ? (r[idx("time")] || "").slice(0, 5) : "",
           paymentMethod: idx("paymentmethod") >= 0 && PAYMENT_METHODS.includes(r[idx("paymentmethod")]) ? r[idx("paymentmethod")] : "Cash",
@@ -911,6 +1005,7 @@ export function deleteExpenseFromModal() {
 // ---------- Combined refresh ----------
 export function refreshAll() {
   refreshCategorySelects();
+  refreshWalletOptions();
   refreshDashboard();
   refreshTransactions();
   refreshBudget();

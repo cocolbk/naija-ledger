@@ -31,6 +31,7 @@ export function upsertExpense(input) {
   }
   const expense = {
     id: uid(), amountKobo, categoryId: input.categoryId, description: (input.description || "").trim(),
+    walletId: state.activeWalletId || "main",
     date: input.date || todayLocal(), time: input.time || "",
     paymentMethod: input.paymentMethod || "Cash", location: (input.location || "").trim(),
     notes: (input.notes || "").trim(), createdAt: now, updatedAt: now,
@@ -55,6 +56,19 @@ export function expensesForMonth(key) {
 
 export function sortedByRecency(list) {
   return sortTxns(list, "newest");
+}
+
+// Wallet-scoped view: null activeWalletId = all wallets.
+export function inWallet(e) {
+  return !state.activeWalletId || (e.walletId || "main") === state.activeWalletId;
+}
+
+export function visibleExpenses() {
+  return state.expenses.filter(inWallet);
+}
+
+export function walletById(id) {
+  return state.wallets.find((w) => w.id === id) || { id, name: "Unknown", icon: "❓" };
 }
 
 export function sortTxns(list, mode = "newest") {

@@ -31,6 +31,8 @@ export function defaultState() {
     savings: [],
     contributions: [],
     recurring: [],
+    wallets: [{ id: "main", name: "Main wallet", icon: "👛" }],
+    activeWalletId: null,
     onboardDraft: {
       profileType: "Personal",
       categoryIds: DEFAULT_CATEGORIES.map((c) => c.id),
@@ -58,7 +60,8 @@ function migrateV1(v1) {
   if (Array.isArray(v1.expenses)) {
     s.expenses = v1.expenses
       .map((e) => ({
-        id: String(e.id), ownerId: "", amountKobo: Math.round(Number(e.amount || 0) * 100),
+        id: String(e.id), ownerId: "", walletId: "main",
+        amountKobo: Math.round(Number(e.amount || 0) * 100),
         categoryId: String(e.categoryId || "other"), description: e.description || "",
         date: e.date || todayLocal(), time: e.time || "",
         paymentMethod: e.paymentMethod || "Cash", location: e.location || "", notes: e.notes || "",
@@ -85,6 +88,13 @@ function load() {
         if (!Array.isArray(s.savings)) s.savings = [];
         if (!Array.isArray(s.contributions)) s.contributions = [];
         if (!Array.isArray(s.recurring)) s.recurring = [];
+        if (!Array.isArray(s.wallets) || !s.wallets.length) {
+          s.wallets = [{ id: "main", name: "Main wallet", icon: "👛" }];
+        }
+        if (!("activeWalletId" in s)) s.activeWalletId = null;
+        if (Array.isArray(s.expenses)) {
+          for (const e of s.expenses) if (!e.walletId) e.walletId = "main";
+        }
         return s;
       }
     }

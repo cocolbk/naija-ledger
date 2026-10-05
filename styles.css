@@ -89,6 +89,16 @@ input, select, textarea {
 }
 label { font-size: 13px; display: block; }
 input[type="checkbox"] { width: auto; margin: 0 8px 0 0; padding: 0; transform: scale(1.25); accent-color: var(--green); align-self: center; flex-shrink: 0; }
+
+/* ---------- Print: reports only ---------- */
+@media print {
+  .app-header, .tabs, footer, #expense-modal, #onboarding-overlay,
+  .btn, .filters, #bulk-bar, #saved-list, #print-reports { display: none !important; }
+  .tab-panel { display: none !important; }
+  #tab-reports { display: block !important; }
+  body { background: #fff; }
+  .card { box-shadow: none; break-inside: avoid; }
+}
 #month-prev, #month-next, #cal-prev, #cal-next { min-width: 44px; font-size: 18px; line-height: 1; }
 
 /* ---------- Calendar ---------- */

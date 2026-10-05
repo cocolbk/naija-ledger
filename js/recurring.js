@@ -107,6 +107,7 @@ export function recordPayment(id) {
   const now = new Date().toISOString();
   state.expenses.push({
     id: uid(), amountKobo: r.amountKobo, categoryId: r.categoryId,
+    walletId: state.activeWalletId || "main",
     description: r.name, date: today, time: "",
     paymentMethod: "Cash", location: "", notes: "Recurring payment",
     createdAt: now, updatedAt: now,

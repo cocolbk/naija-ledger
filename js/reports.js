@@ -16,14 +16,15 @@ export function totalsForMonth(month) {
   return sumKobo(expensesForMonth(month));
 }
 
-export function dailyTotals(lastDateStr, days) {
+export function dailyTotals(lastDateStr, days, list = null) {
+  const src = list || state.expenses;
   const out = [];
   const [y, m, dd] = lastDateStr.split("-").map(Number);
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(y, m - 1, dd);
     d.setDate(d.getDate() - i);
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    out.push({ date: ds, total: sumKobo(state.expenses.filter((e) => e.date === ds)) });
+    out.push({ date: ds, total: sumKobo(src.filter((e) => e.date === ds)) });
   }
   return out;
 }

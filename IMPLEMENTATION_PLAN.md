@@ -99,7 +99,7 @@ Target layout:
 8. Personal/Business separation — owner toggle + filtered dashboards (Sec-19).
 - Acceptance: each behind feature flag; upgrade migration tested.
 
-## Phase 6 — Phase 3 explorations (PRD Sec-25)
+## Phase 6 — Locally-shippable scope (✅ DONE Oct 2026 — multiple wallets with global switcher + history filter + CSV wallet column, printable/PDF reports via print stylesheet; household/shared expenses DEFERRED — needs hosted multi-user backend + auth, not faked on localStorage)
 
 Household/shared expenses, exportable PDF reports, multiple wallets/accounts, advanced planning.
 Requires local API + Better Auth multi-session + R2. Stays on this machine until you choose otherwise.

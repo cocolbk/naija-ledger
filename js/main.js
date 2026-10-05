@@ -9,7 +9,7 @@ import {
   exportJson, exportCsv, importCsvFile, resetAllData,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
   saveGoalFromForm, resetGoalForm, shiftCalMonth, resetCalMonth,
-  saveRecFromForm, resetRecForm,
+  saveRecFromForm, resetRecForm, setActiveWallet, addWalletFromInputs,
   setRefreshHook, setResetHook,
 } from "./ui.js";
 
@@ -147,7 +147,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ---------- Transactions filters ----------
-["f-search", "f-category", "f-payment", "f-from", "f-to", "f-min", "f-max", "f-sort"].forEach((id) =>
+["f-search", "f-category", "f-wallet", "f-payment", "f-from", "f-to", "f-min", "f-max", "f-sort"].forEach((id) =>
   document.getElementById(id).addEventListener("input", refreshTransactions)
 );
 document.getElementById("f-clear").onclick = clearFilters;
@@ -161,6 +161,12 @@ document.getElementById("month-reset").onclick = resetViewMonth;
 document.getElementById("cal-prev").onclick = () => shiftCalMonth(-1);
 document.getElementById("cal-next").onclick = () => shiftCalMonth(1);
 document.getElementById("cal-reset").onclick = resetCalMonth;
+document.getElementById("wallet-switch").onchange = (e) => setActiveWallet(e.target.value);
+document.getElementById("add-wallet").onclick = addWalletFromInputs;
+document.getElementById("print-reports").onclick = () => {
+  showTab("reports");
+  setTimeout(() => window.print(), 100);
+};
 
 // ---------- Budget / settings (static controls) ----------
 document.getElementById("save-monthly-budget").onclick = saveMonthlyBudgetFromInput;

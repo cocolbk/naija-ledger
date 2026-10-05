@@ -26,6 +26,7 @@
     </div>
     <div class="row" style="margin-top:0">
       <button id="theme-toggle" class="btn" aria-label="Toggle dark mode">🌙</button>
+      <select id="wallet-switch" aria-label="Active wallet" style="width:auto;max-width:150px;margin:0"></select>
       <button id="global-add-btn" class="btn primary">+ Add Expense</button>
     </div>
   </header>
@@ -86,6 +87,7 @@
         <div class="filters">
           <input id="f-search" type="search" placeholder="Search description, category, location..." />
           <select id="f-category"><option value="">All categories</option></select>
+          <select id="f-wallet" aria-label="Filter by wallet"><option value="">All wallets</option></select>
           <select id="f-payment">
             <option value="">All payment methods</option>
             <option>Cash</option>
@@ -166,7 +168,10 @@
     <!-- REPORTS -->
     <section id="tab-reports" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-reports">
       <div class="card">
-        <h3>Spending Insights</h3>
+        <div class="row-between">
+          <h3>Spending Insights</h3>
+          <button id="print-reports" class="btn">🖨️ Print / PDF</button>
+        </div>
         <div id="insights-list"></div>
       </div>
       <div class="grid-2">
@@ -261,6 +266,15 @@
           <input id="new-cat-name" type="text" placeholder="New category name" />
           <input id="new-cat-icon" type="text" placeholder="Icon (e.g. 🛒)" maxlength="4" />
           <button id="add-category" class="btn primary">Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Wallets</h3>
+        <div id="settings-wallets"></div>
+        <div class="row">
+          <input id="new-wallet-name" type="text" placeholder="New wallet name" maxlength="40" />
+          <input id="new-wallet-icon" type="text" placeholder="Icon (e.g. 👛)" maxlength="4" />
+          <button id="add-wallet" class="btn primary">Add</button>
         </div>
       </div>
       <div class="card">
