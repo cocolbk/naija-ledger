@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.naijaledger.twa",
+      "sha256_cert_fingerprints": [
+        "0B:2D:D5:EE:AB:0A:F5:ED:3E:4E:2E:FF:14:07:23:59:20:98:DC:F8:32:9F:58:68:8E:1B:0F:7D:AB:22:39:58"
+      ]
+    }
+  }
+]
