@@ -1,0 +1,31 @@
+{
+  "name": "Naija Ledger — Know Where Your Money Goes",
+  "short_name": "Naija Ledger",
+  "description": "Nigeria-focused spending tracker. Record daily expenses, understand monthly patterns, stay within budget.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f4ec",
+  "theme_color": "#0e7c3e",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

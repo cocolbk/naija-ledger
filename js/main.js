@@ -200,3 +200,58 @@ function boot() {
 setRefreshHook(boot);
 setResetHook(() => { step = 0; renderOnboarding(); });
 boot();
+
+// ---------- Service worker (offline + installable; needs HTTPS or localhost) ----------
+if ("serviceWorker" in navigator &&
+    (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* offline support unavailable */ });
+  });
+}
+
+// ---------- Install prompt ----------
+const installCard = document.getElementById("install-card");
+const installBtn = document.getElementById("install-btn");
+const installIosHint = document.getElementById("install-ios-hint");
+const installText = document.getElementById("install-text");
+let deferredPrompt = null;
+
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+function isIos() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+function dismissInstall() {
+  installCard.classList.add("hidden");
+  try { localStorage.setItem("naijaLedger.installDismissed", "1"); } catch (e) {}
+}
+function maybeShowInstall() {
+  if (isStandalone()) return;
+  let dismissed = null;
+  try { dismissed = localStorage.getItem("naijaLedger.installDismissed"); } catch (e) {}
+  if (dismissed) return;
+  if (isIos()) {
+    installText.classList.add("hidden");
+    installIosHint.classList.remove("hidden");
+    installBtn.classList.add("hidden");
+    installCard.classList.remove("hidden");
+  } else if (deferredPrompt) {
+    installCard.classList.remove("hidden");
+  }
+}
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  maybeShowInstall();
+});
+installBtn.onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice.catch(() => null);
+  if (choice && choice.outcome === "accepted") dismissInstall();
+  deferredPrompt = null;
+};
+document.getElementById("install-dismiss").onclick = dismissInstall;
+window.addEventListener("appinstalled", dismissInstall);
+maybeShowInstall();

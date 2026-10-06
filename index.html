@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Naija Ledger — Know Where Your Money Goes</title>
+  <meta name="description" content="Nigeria-focused spending tracker. Record daily expenses, understand monthly patterns, stay within budget." />
+  <meta name="theme-color" content="#0e7c3e" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Naija Ledger" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -45,6 +53,17 @@
   <main id="main">
     <!-- HOME -->
     <section id="tab-home" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-home">
+      <div class="card hidden" id="install-card">
+        <div class="row-between">
+          <strong>📲 Install Naija Ledger</strong>
+          <button id="install-dismiss" class="btn link">Later</button>
+        </div>
+        <p class="muted" id="install-text">Add it to your home screen for one-tap access — works offline.</p>
+        <p class="muted hidden" id="install-ios-hint">On iPhone/iPad: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</p>
+        <div class="row">
+          <button id="install-btn" class="btn primary">Install App</button>
+        </div>
+      </div>
       <div class="grid-2">
         <div class="card">
           <h3>Today's Spending</h3>
