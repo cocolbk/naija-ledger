@@ -1,5 +1,5 @@
 // Savings goals: CRUD + contributions. Money in kobo ints.
-import { state, save } from "./store.js";
+import { state, save, STORE_ERROR_MSG } from "./store.js";
 import { uid, parseAmountToKobo, todayLocal } from "./utils.js";
 
 export function getGoals() {
@@ -54,19 +54,19 @@ export function upsertGoal({ id, name, target, targetDate }) {
     const g = getGoals().find((x) => x.id === id);
     if (!g) return { error: "Goal not found." };
     Object.assign(g, clean);
-    save();
+    if (!save()) return { error: STORE_ERROR_MSG };
     return { goal: g };
   }
   const goal = { id: uid(), savedKobo: 0, createdAt: now, ...clean };
   getGoals().push(goal);
-  save();
+  if (!save()) return { error: STORE_ERROR_MSG };
   return { goal };
 }
 
 export function deleteGoal(id) {
   state.savings = getGoals().filter((g) => g.id !== id);
   state.contributions = (state.contributions || []).filter((c) => c.goalId !== id);
-  save();
+  return save();
 }
 
 // kind: "in" (contribute) | "out" (withdraw)
@@ -85,7 +85,7 @@ export function recordContribution(goalId, kind, amountInput, note = "") {
   });
   g.savedKobo = (Number(g.savedKobo) || 0) + (kind === "out" ? -kobo : kobo);
   g.updatedAt = now;
-  save();
+  if (!save()) return STORE_ERROR_MSG;
   return null;
 }
 

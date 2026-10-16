@@ -132,12 +132,20 @@ function load() {
 export let state = load();
 
 export function save() {
-  localStorage.setItem(LS_V2, JSON.stringify(state));
+  try {
+    localStorage.setItem(LS_V2, JSON.stringify(state));
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
+
+export const STORE_ERROR_MSG =
+  "Couldn't save — this browser is blocking site storage (private/incognito mode?) or storage is full. Changes will be lost on reload.";
 
 export function resetState() {
   state = defaultState();
-  save();
+  return save();
 }
 
 export function cur() {

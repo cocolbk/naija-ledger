@@ -1,5 +1,5 @@
 // Recurring expenses: schedules, due status, payment recording. Local dates only.
-import { state, save } from "./store.js";
+import { state, save, STORE_ERROR_MSG } from "./store.js";
 import { uid, parseAmountToKobo, todayLocal } from "./utils.js";
 
 export const FREQUENCIES = [
@@ -78,25 +78,25 @@ export function upsertRecurring({ id, name, amount, categoryId, frequency, inter
     const r = getRecurring().find((x) => x.id === id);
     if (!r) return { error: "Schedule not found." };
     Object.assign(r, clean);
-    save();
+    if (!save()) return { error: STORE_ERROR_MSG };
     return { item: r };
   }
   const item = { id: uid(), active: true, createdAt: now, ...clean };
   getRecurring().push(item);
-  save();
+  if (!save()) return { error: STORE_ERROR_MSG };
   return { item };
 }
 
 export function deleteRecurring(id) {
   state.recurring = getRecurring().filter((r) => r.id !== id);
-  save();
+  return save();
 }
 
 export function toggleRecurring(id) {
   const r = getRecurring().find((x) => x.id === id);
-  if (!r) return;
+  if (!r) return false;
   r.active = !r.active;
-  save();
+  return save();
 }
 
 // Record a payment: creates the expense and advances the schedule past today.
@@ -117,6 +117,6 @@ export function recordPayment(id) {
   while (next <= today && guard++ < 100) next = nextDueFrom(next, r.frequency, r.intervalDays);
   r.nextDue = next;
   r.updatedAt = now;
-  save();
+  if (!save()) return STORE_ERROR_MSG;
   return null;
 }

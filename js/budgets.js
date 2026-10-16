@@ -1,5 +1,5 @@
 // Budget math: percent-used + status thresholds (80% warn, 100% over).
-import { state, save } from "./store.js";
+import { state, save, STORE_ERROR_MSG } from "./store.js";
 import { parseAmountToKobo } from "./utils.js";
 
 export function pctUsed(spentKobo, limitKobo) {
@@ -17,25 +17,25 @@ export function setMonthlyBudget(nairaInput) {
   const kobo = parseAmountToKobo(nairaInput);
   if (kobo === null) return "Enter a valid budget amount.";
   state.budgets.monthlyKobo = kobo;
-  save();
+  if (!save()) return STORE_ERROR_MSG;
   return null;
 }
 
 export function clearMonthlyBudget() {
   state.budgets.monthlyKobo = null;
-  save();
+  return save();
 }
 
 export function setCategoryBudget(catId, nairaInput) {
   const raw = String(nairaInput ?? "").trim();
   if (raw === "") {
     delete state.budgets.categories[catId];
-    save();
+    if (!save()) return STORE_ERROR_MSG;
     return null;
   }
   const kobo = parseAmountToKobo(raw);
   if (kobo === null) return "Enter a valid limit (or clear the field to remove).";
   state.budgets.categories[catId] = kobo;
-  save();
+  if (!save()) return STORE_ERROR_MSG;
   return null;
 }

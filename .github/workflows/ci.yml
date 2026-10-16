@@ -44,3 +44,24 @@ jobs:
           if (missing.length) { console.error('Missing IDs in index.html:', missing.join(', ')); process.exit(1); }
           console.log('All ' + ids.length + ' referenced IDs present.');
           "
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright + Chromium
+        run: |
+          npm init -y
+          npm i playwright playwright-core
+          npx playwright install --with-deps chromium
+      - name: Serve static app
+        run: |
+          nohup python3 -m http.server 8901 --directory . >/tmp/serve.log 2>&1 &
+          sleep 2
+          curl -sf http://127.0.0.1:8901/index.html > /dev/null
+      - name: Headless browser smoke test
+        run: node tests/smoke.pw.cjs
+        env:
+          BASE_URL: http://127.0.0.1:8901

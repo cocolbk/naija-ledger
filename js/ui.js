@@ -1,5 +1,5 @@
 // All DOM rendering + modal + settings actions. No wiring of static buttons here (see main.js).
-import { state, save, resetState, cur, catById, categoryName } from "./store.js";
+import { state, save, resetState, cur, catById, categoryName, STORE_ERROR_MSG } from "./store.js";
 import { esc, fmtKobo, koboToInput, parseAmountToKobo, todayLocal, addDaysStr, prevMonthKey, debounce, parseCsv, uid } from "./utils.js";
 import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecency, sortTxns, inWallet, visibleExpenses, walletById, PAYMENT_METHODS } from "./expenses.js";
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
@@ -150,6 +150,13 @@ export function refreshDashboard() {
   bindTxnButtons(document.getElementById("recent-list"));
 }
 
+export function refreshAvatar() {
+  const el = document.getElementById("avatar-initial");
+  if (!el) return;
+  const name = (state.user.name || "").trim();
+  el.textContent = name ? name[0].toUpperCase() : "👤";
+}
+
 // ---------- Transaction history + filters/sort/paging/bulk/saved ----------
 const PAGE = 100;
 let txnLimit = PAGE;
@@ -252,7 +259,7 @@ export function bulkDeleteSelected() {
   if (!selectedIds.size) return;
   if (!confirm(`Delete ${selectedIds.size} selected expense${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
   state.expenses = state.expenses.filter((e) => !selectedIds.has(e.id));
-  save();
+  if (!persistOk()) return;
   selectedIds.clear();
   refreshAll();
 }
@@ -270,7 +277,7 @@ export function saveCurrentFilter() {
   nameInput.setCustomValidity("");
   getSavedFilters().push({ id: uid(), name, filters: currentFilters() });
   nameInput.value = "";
-  save();
+  if (!persistOk()) return;
   renderSavedFilters();
 }
 
@@ -295,7 +302,7 @@ export function renderSavedFilters() {
   el.querySelectorAll("[data-sdel]").forEach((b) => {
     b.onclick = () => {
       state.savedFilters = getSavedFilters().filter((x) => x.id !== b.dataset.sdel);
-      save();
+      if (!persistOk()) return;
       renderSavedFilters();
     };
   });
@@ -521,7 +528,7 @@ export function refreshSavings() {
       const g = getGoals().find((x) => x.id === b.dataset.gdel);
       if (!g) return;
       if (!confirm(`Delete goal "${g.name}" and its contribution history?`)) return;
-      deleteGoal(g.id);
+      if (!deleteGoal(g.id)) { setSettingsNote(STORE_ERROR_MSG); return; }
       refreshAll();
     };
   });
@@ -650,14 +657,17 @@ function bindRecButtons(root) {
     };
   });
   root.querySelectorAll("[data-rectoggle]").forEach((b) => {
-    b.onclick = () => { toggleRecurring(b.dataset.rectoggle); refreshAll(); };
+    b.onclick = () => {
+      if (!toggleRecurring(b.dataset.rectoggle)) { setSettingsNote(STORE_ERROR_MSG); return; }
+      refreshAll();
+    };
   });
   root.querySelectorAll("[data-recdel]").forEach((b) => {
     b.onclick = () => {
       const r = getRecurring().find((x) => x.id === b.dataset.recdel);
       if (!r) return;
       if (!confirm(`Delete the "${r.name}" schedule? Past expenses stay.`)) return;
-      deleteRecurring(r.id);
+      if (!deleteRecurring(r.id)) { setSettingsNote(STORE_ERROR_MSG); return; }
       refreshAll();
     };
   });
@@ -733,7 +743,7 @@ export function refreshRecurring() {
 // ---------- Wallets ----------
 export function setActiveWallet(id) {
   state.activeWalletId = id || null;
-  save();
+  if (!persistOk()) return;
   refreshAll();
 }
 
@@ -753,7 +763,7 @@ export function refreshWalletsSettings() {
       const v = inp.value.trim().slice(0, 40);
       if (!v) { inp.value = w.name; return; }
       w.name = v;
-      save();
+      if (!persistOk()) { inp.value = w.name; return; }
       refreshAll();
     });
   });
@@ -768,7 +778,7 @@ export function refreshWalletsSettings() {
       if (!confirm("Remove this wallet?")) return;
       state.wallets = state.wallets.filter((w) => w.id !== id);
       if (state.activeWalletId === id) state.activeWalletId = null;
-      save();
+      if (!persistOk()) return;
       refreshAll();
     };
   });
@@ -785,7 +795,7 @@ export function addWalletFromInputs() {
   state.wallets.push({ id: uid(), name, icon });
   document.getElementById("new-wallet-name").value = "";
   document.getElementById("new-wallet-icon").value = "";
-  save();
+  if (!persistOk()) return;
   refreshAll();
 }
 
@@ -867,8 +877,14 @@ function coMsg(msg, isError) {
 export function payWithTestMode() {
   if (!coPlan) return;
   const amount = priceFor(coPlan, billCycle);
-  recordBillingPayment({ ref: "TEST-" + uid(), plan: coPlan, cycle: billCycle, amountKobo: amount * 100, status: "test", method: coMethod });
-  activateSubscription(coPlan, billCycle, "TEST", "test");
+  if (!recordBillingPayment({ ref: "TEST-" + uid(), plan: coPlan, cycle: billCycle, amountKobo: amount * 100, status: "test", method: coMethod })) {
+    coMsg(STORE_ERROR_MSG, true);
+    return;
+  }
+  if (!activateSubscription(coPlan, billCycle, "TEST", "test")) {
+    coMsg(STORE_ERROR_MSG, true);
+    return;
+  }
   coPlan = null;
   refreshAll();
 }
@@ -927,7 +943,7 @@ function onPaystackSuccess(reference) {
   const verifyUrl = (plans().verifyUrl || "").trim();
   if (!verifyUrl) {
     state.subscription.status = "pending_verification";
-    save();
+    if (!save()) { coMsg(STORE_ERROR_MSG, true); return; }
     coMsg(`Payment received (ref ${reference}). It stays pending until the server verifies it — connect a verification endpoint to activate automatically.`, false);
     refreshAll();
     return;
@@ -941,8 +957,14 @@ function onPaystackSuccess(reference) {
     .then((r) => r.json())
     .then((j) => {
       if (j && j.verified) {
-        recordBillingPayment({ ref: reference, plan: coPlan, cycle: billCycle, amountKobo: amount * 100, status: "verified", method: coMethod });
-        activateSubscription(coPlan, billCycle, reference, coMethod);
+        if (!recordBillingPayment({ ref: reference, plan: coPlan, cycle: billCycle, amountKobo: amount * 100, status: "verified", method: coMethod })) {
+          coMsg(STORE_ERROR_MSG, true);
+          return;
+        }
+        if (!activateSubscription(coPlan, billCycle, reference, coMethod)) {
+          coMsg(STORE_ERROR_MSG, true);
+          return;
+        }
         coPlan = null;
         refreshAll();
       } else {
@@ -959,6 +981,7 @@ function onPaystackSuccess(reference) {
 export function cancelSubscriptionAndRefresh() {
   if (!confirm("Cancel your subscription? You keep access until the end of the paid period. Your records are never deleted.")) return;
   cancelSubscription();
+  if (!persistOk()) return;
   refreshAll();
 }
 
@@ -977,7 +1000,7 @@ export function saveBusinessProfile() {
   if (!state.wallets.some((w) => w.id === "business")) {
     state.wallets.push({ id: "business", name: name + " (Business)", icon: "💼" });
   }
-  save();
+  if (!persistOk()) return;
   refreshAll();
 }
 
@@ -1118,6 +1141,24 @@ export function renderPlans() {
   }
 }
 
+// ---------- Storage health ----------
+// Returns true when a save actually persisted. Shows a visible error otherwise,
+// so a blocked/full browser store can never fail silently again.
+export function persistOk() {
+  if (save()) {
+    updateStoreBanner(true);
+    return true;
+  }
+  updateStoreBanner(false);
+  setSettingsNote(STORE_ERROR_MSG);
+  return false;
+}
+
+export function updateStoreBanner(ok) {
+  const el = document.getElementById("store-banner");
+  if (el) el.classList.toggle("hidden", !!ok);
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
@@ -1143,7 +1184,7 @@ export function refreshSettings() {
       const v = inp.value.trim();
       if (!v) { inp.value = c.name; return; }
       c.name = v.slice(0, 40);
-      save();
+      if (!persistOk()) { inp.value = c.name; return; }
       refreshAll();
     });
   });
@@ -1155,7 +1196,7 @@ export function refreshSettings() {
       }
       if (!confirm("Remove this category?")) return;
       state.categories = state.categories.filter((c) => c.id !== b.dataset.delcat);
-      save();
+      if (!persistOk()) return;
       refreshAll();
     };
   });
@@ -1171,7 +1212,7 @@ export function saveProfileFromInputs() {
   state.user.name = document.getElementById("set-name").value.trim().slice(0, 60);
   state.user.profileType = document.getElementById("set-profile").value;
   state.user.currency = document.getElementById("set-currency").value.trim().slice(0, 3) || "₦";
-  save();
+  if (!persistOk()) return;
   refreshAll();
   setSettingsNote("Profile saved ✓ — it now shows on your avatar.");
 }
@@ -1188,7 +1229,7 @@ export function addCategoryFromInputs() {
   state.categories.push({ id: uid(), name, icon, group: "Custom", custom: true });
   document.getElementById("new-cat-name").value = "";
   document.getElementById("new-cat-icon").value = "";
-  save();
+  if (!persistOk()) return;
   refreshAll();
 }
 
@@ -1259,7 +1300,7 @@ export function importCsvFile(file) {
         });
         ok++;
       }
-      save();
+      if (!save()) { setSettingsNote(STORE_ERROR_MSG); return; }
       refreshAll();
       setSettingsNote(`Imported ${ok} expense${ok === 1 ? "" : "s"}${skipped ? `, skipped ${skipped} invalid row${skipped === 1 ? "" : "s"}` : ""}.`);
     } catch (e) {
@@ -1271,7 +1312,7 @@ export function importCsvFile(file) {
 
 export function resetAllData() {
   if (!confirm("Reset ALL Naija Ledger data? This cannot be undone.")) return;
-  resetState();
+  if (!resetState()) { setSettingsNote(STORE_ERROR_MSG); return; }
   refreshAll();
   if (onResetCallback) onResetCallback();
 }
@@ -1364,7 +1405,7 @@ export function saveExpenseFromModal() {
 export function deleteExpenseFromModal() {
   const id = document.getElementById("exp-id").value;
   if (!id || !confirm("Delete this expense?")) return;
-  deleteExpense(id);
+  if (!deleteExpense(id)) { modalError(STORE_ERROR_MSG); return; }
   closeExpenseModal();
   if (onSavedCallback) onSavedCallback();
 }

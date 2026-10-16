@@ -1,13 +1,13 @@
 // Entry point: tabs, theme, onboarding, static control wiring, boot.
-import { state, save, PROFILE_TYPES, DEFAULT_CATEGORIES } from "./store.js";
+import { state, save, STORE_ERROR_MSG, PROFILE_TYPES, DEFAULT_CATEGORIES } from "./store.js";
 import { parseAmountToKobo } from "./utils.js";
 import { clearMonthlyBudget } from "./budgets.js";
 import { loadPlansConfig } from "./billing.js";
 import {
   refreshAll, refreshTransactions, clearFilters, showTodayTransactions,
   openExpenseModal, closeExpenseModal, setExpMode, saveExpenseFromModal, deleteExpenseFromModal,
-  saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs,
-  resetAllData,
+  saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs, setSettingsNote,
+  resetAllData, updateStoreBanner,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
   saveGoalFromForm, resetGoalForm, shiftCalMonth, resetCalMonth,
   saveRecFromForm, resetRecForm, setActiveWallet, addWalletFromInputs,
@@ -174,7 +174,7 @@ document.getElementById("print-reports").onclick = () => {
 // ---------- Budget / settings (static controls) ----------
 document.getElementById("save-monthly-budget").onclick = saveMonthlyBudgetFromInput;
 document.getElementById("clear-monthly-budget").onclick = () => {
-  clearMonthlyBudget();
+  if (!clearMonthlyBudget()) { setSettingsNote(STORE_ERROR_MSG); return; }
   refreshAll();
 };
 document.getElementById("save-profile").onclick = saveProfileFromInputs;
@@ -191,6 +191,13 @@ document.getElementById("rec-freq").onchange = (e) => {
 
 // ---------- Boot ----------
 async function boot() {
+  try {
+    localStorage.setItem("__nl_probe", "1");
+    localStorage.removeItem("__nl_probe");
+    updateStoreBanner(true);
+  } catch (e) {
+    updateStoreBanner(false);
+  }
   await loadPlansConfig();
   applyTheme();
   refreshAll();

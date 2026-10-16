@@ -1,5 +1,5 @@
 // Expense validation + CRUD. All amounts in kobo ints.
-import { state, save } from "./store.js";
+import { state, save, STORE_ERROR_MSG } from "./store.js";
 import { uid, parseAmountToKobo, todayLocal } from "./utils.js";
 
 export const PAYMENT_METHODS = ["Cash", "Bank transfer", "Debit card", "POS", "Mobile payment", "Other"];
@@ -26,7 +26,7 @@ export function upsertExpense(input) {
       paymentMethod: input.paymentMethod || "Cash", location: (input.location || "").trim(),
       notes: (input.notes || "").trim(), updatedAt: now,
     });
-    save();
+    if (!save()) return { error: STORE_ERROR_MSG };
     return { expense: existing };
   }
   const expense = {
@@ -37,13 +37,13 @@ export function upsertExpense(input) {
     notes: (input.notes || "").trim(), createdAt: now, updatedAt: now,
   };
   state.expenses.push(expense);
-  save();
+  if (!save()) return { error: STORE_ERROR_MSG };
   return { expense };
 }
 
 export function deleteExpense(id) {
   state.expenses = state.expenses.filter((x) => x.id !== id);
-  save();
+  return save();
 }
 
 export function monthKey(dateStr) {

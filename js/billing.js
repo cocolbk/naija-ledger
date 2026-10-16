@@ -103,8 +103,7 @@ export function activateSubscription(plan, cycle, ref, method) {
     plan, cycle, status: "active", since: today,
     renews: renewsDate(plan, cycle, today), ref: ref || null, method: method || null,
   };
-  save();
-  return state.subscription;
+  return save();
 }
 
 export function recordPayment({ ref, plan, cycle, amountKobo, status, method }) {
@@ -113,14 +112,15 @@ export function recordPayment({ ref, plan, cycle, amountKobo, status, method }) 
     id: "pay_" + Date.now().toString(36), ref: ref || null, plan, cycle,
     amountKobo: amountKobo || 0, status, method: method || null, date: todayLocal(),
   });
-  save();
+  return save();
 }
 
 export function cancelSubscription() {
   if (state.subscription && state.subscription.plan !== "free") {
     state.subscription.status = "cancelled";
-    save();
+    return save();
   }
+  return true;
 }
 
 export function subscriptionLabel() {
