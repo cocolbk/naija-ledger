@@ -6,7 +6,7 @@ import {
   refreshAll, refreshTransactions, clearFilters, showTodayTransactions,
   openExpenseModal, closeExpenseModal, setExpMode, saveExpenseFromModal, deleteExpenseFromModal,
   saveMonthlyBudgetFromInput, saveProfileFromInputs, addCategoryFromInputs,
-  exportJson, exportCsv, importCsvFile, resetAllData,
+  resetAllData,
   shiftViewMonth, resetViewMonth, bulkDeleteSelected, saveCurrentFilter,
   saveGoalFromForm, resetGoalForm, shiftCalMonth, resetCalMonth,
   saveRecFromForm, resetRecForm, setActiveWallet, addWalletFromInputs,
@@ -176,12 +176,7 @@ document.getElementById("clear-monthly-budget").onclick = () => {
 };
 document.getElementById("save-profile").onclick = saveProfileFromInputs;
 document.getElementById("add-category").onclick = addCategoryFromInputs;
-document.getElementById("export-json").onclick = exportJson;
-document.getElementById("export-csv").onclick = exportCsv;
-document.getElementById("import-csv").addEventListener("change", (e) => {
-  if (e.target.files && e.target.files[0]) importCsvFile(e.target.files[0]);
-  e.target.value = "";
-});
+document.getElementById("profile-btn").onclick = () => showTab("settings");
 document.getElementById("reset-data").onclick = resetAllData;
 document.getElementById("goal-save").onclick = saveGoalFromForm;
 document.getElementById("goal-cancel").onclick = resetGoalForm;

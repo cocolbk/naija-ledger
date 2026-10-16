@@ -5,6 +5,7 @@ import { upsertExpense, deleteExpense, monthKey, expensesForMonth, sortedByRecen
 import { pctUsed, statusFor, setMonthlyBudget, clearMonthlyBudget, setCategoryBudget } from "./budgets.js";
 import { sumKobo, byCategory, totalsForMonth, dailyTotals } from "./reports.js";
 import { buildMonthGrid, shiftMonthKey } from "./calendar.js";
+import { premiumStatus, activatePremium, cancelPremium, premiumPriceLabel, PREMIUM_PRICE_NGN } from "./premium.js";
 import { generateInsights } from "./insights.js";
 import { getRecurring, FREQUENCIES, dueStatus, upsertRecurring, deleteRecurring, toggleRecurring, recordPayment } from "./recurring.js";
 import { getGoals, getContributions, goalPct, remainingKobo, daysLeft, upsertGoal, deleteGoal, recordContribution, savingsTotals } from "./savings.js";
@@ -759,6 +760,90 @@ export function addWalletFromInputs() {
   refreshAll();
 }
 
+// ---------- Premium ----------
+let premMethod = "card";
+let premCheckout = false;
+
+export function setPremMethod(m) {
+  premMethod = m;
+  renderPremium();
+}
+
+export function startPremCheckout() {
+  premCheckout = true;
+  renderPremium();
+  const el = document.getElementById("prem-confirm");
+  if (el) el.focus();
+}
+
+export function backPremCheckout() {
+  premCheckout = false;
+  renderPremium();
+}
+
+export function confirmPremUpgrade() {
+  activatePremium(premMethod);
+  premCheckout = false;
+  refreshAll();
+}
+
+export function cancelPremUpgrade() {
+  if (!confirm("Cancel Premium? You will keep access until the end of the paid period.")) return;
+  cancelPremium();
+  refreshAll();
+}
+
+export function refreshPremium() {
+  const st = premiumStatus();
+  document.getElementById("premium-price").innerHTML =
+    `${esc(fmtKobo(PREMIUM_PRICE_NGN * 100, cur()))}<span class="muted" style="font-size:14px">/month</span>`;
+  const body = document.getElementById("premium-body");
+  if (st.active) {
+    body.innerHTML = `
+      <p><span class="badge financial">👑 PREMIUM ACTIVE</span></p>
+      <p class="muted">Since ${esc(st.since || "")} • renews ${esc(st.renews || "")} • paid with ${esc(st.method === "transfer" ? "bank transfer" : "card")}</p>
+      <div class="row"><button id="prem-cancel" class="btn danger">Cancel Premium</button></div>`;
+    document.getElementById("prem-cancel").onclick = cancelPremUpgrade;
+  } else if (premCheckout) {
+    body.innerHTML = `
+      <p><strong>Order summary</strong></p>
+      <p class="muted">Naija Ledger Premium — 30 days • ${esc(fmtKobo(PREMIUM_PRICE_NGN * 100, cur()))}</p>
+      <label>Pay with
+        <select id="prem-method">
+          <option value="card">Card</option>
+          <option value="transfer">Bank transfer</option>
+        </select>
+      </label>
+      <p id="prem-error" class="error-text hidden" role="alert"></p>
+      <div class="row">
+        <button id="prem-confirm" class="btn primary">Pay ${esc(fmtKobo(PREMIUM_PRICE_NGN * 100, cur()))}</button>
+        <button id="prem-back" class="btn">Back</button>
+      </div>`;
+    document.getElementById("prem-method").value = premMethod;
+    document.getElementById("prem-method").onchange = (e) => { premMethod = e.target.value; };
+    document.getElementById("prem-back").onclick = backPremCheckout;
+    document.getElementById("prem-confirm").onclick = confirmPremUpgrade;
+  } else {
+    body.innerHTML = `
+      ${st.expired ? `<p class="alert">Your Premium expired on ${esc(st.renews || "")}. Renew to keep business statements coming.</p>` : ""}
+      <div class="row">
+        <button id="prem-upgrade" class="btn primary">Upgrade Now — ${esc(fmtKobo(PREMIUM_PRICE_NGN * 100, cur()))}/mo</button>
+      </div>`;
+    document.getElementById("prem-upgrade").onclick = startPremCheckout;
+  }
+
+  // Business snapshot: Business-category spending this month (all wallets).
+  const mk = monthKey(todayLocal());
+  const biz = state.expenses.filter((e) => e.categoryId === "business" && monthKey(e.date) === mk);
+  const total = biz.reduce((s, e) => s + (Number(e.amountKobo) || 0), 0);
+  const top = [...biz].sort((a, b) => b.amountKobo - a.amountKobo)[0];
+  document.getElementById("biz-snap").innerHTML = biz.length
+    ? `<p class="big">${esc(fmtKobo(total, cur()))}</p>
+       <p class="muted">${biz.length} business expense${biz.length === 1 ? "" : "s"} this month${top ? ` • largest: ${esc(fmtKobo(top.amountKobo, cur()))}${top.description ? " — " + esc(top.description) : ""}` : ""}</p>
+       ${st.active ? "" : `<p class="muted">Go Premium to get printable monthly business statements.</p>`}`
+    : `<p class="muted">No business expenses recorded this month. Tag spending under the Business category to track it here.</p>`;
+}
+
 // ---------- Settings ----------
 export function refreshSettings() {
   document.getElementById("set-name").value = state.user.name || "";
@@ -807,7 +892,7 @@ export function saveProfileFromInputs() {
   state.user.currency = document.getElementById("set-currency").value.trim().slice(0, 3) || "₦";
   save();
   refreshAll();
-  setSettingsNote("Profile saved.");
+  setSettingsNote("Profile saved ✓ — it now shows on your avatar.");
 }
 
 export function addCategoryFromInputs() {
@@ -1006,12 +1091,14 @@ export function deleteExpenseFromModal() {
 export function refreshAll() {
   refreshCategorySelects();
   refreshWalletOptions();
+  refreshAvatar();
   refreshDashboard();
   refreshTransactions();
   refreshBudget();
   refreshSavings();
   refreshCalendar();
   refreshRecurring();
+  refreshPremium();
   refreshReports();
   refreshSettings();
 }

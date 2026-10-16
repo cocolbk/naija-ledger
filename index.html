@@ -36,6 +36,7 @@
       <button id="theme-toggle" class="btn" aria-label="Toggle dark mode">🌙</button>
       <select id="wallet-switch" aria-label="Active wallet" style="width:auto;max-width:150px;margin:0"></select>
       <button id="global-add-btn" class="btn primary">+ Add Expense</button>
+      <button id="profile-btn" class="avatar-btn" aria-label="Open profile"><span id="avatar-initial">👤</span></button>
     </div>
   </header>
 
@@ -47,6 +48,7 @@
     <button data-tab="reports" id="tabbtn-reports" class="tab" role="tab" aria-selected="false" aria-controls="tab-reports">Reports</button>
     <button data-tab="calendar" id="tabbtn-calendar" class="tab" role="tab" aria-selected="false" aria-controls="tab-calendar">Calendar</button>
     <button data-tab="recurring" id="tabbtn-recurring" class="tab" role="tab" aria-selected="false" aria-controls="tab-recurring">Recurring</button>
+    <button data-tab="premium" id="tabbtn-premium" class="tab" role="tab" aria-selected="false" aria-controls="tab-premium">👑 Premium</button>
     <button data-tab="settings" id="tabbtn-settings" class="tab" role="tab" aria-selected="false" aria-controls="tab-settings">Profile</button>
   </nav>
 
@@ -260,6 +262,25 @@
       </div>
     </section>
 
+    <!-- PREMIUM -->
+    <section id="tab-premium" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-premium">
+      <div class="card">
+        <h3>👑 Naija Ledger Premium</h3>
+        <p class="muted">For business owners who want clean monthly records.</p>
+        <p class="big" id="premium-price">₦3,000<span class="muted" style="font-size:14px">/month</span></p>
+        <div id="premium-body"></div>
+      </div>
+      <div class="card">
+        <h3>📊 Business snapshot (this month)</h3>
+        <div id="biz-snap"></div>
+      </div>
+      <div class="card">
+        <h3>Why Premium?</h3>
+        <p class="muted">• Monthly statements ready for your records and tax filing<br />• Separate business wallet tracking<br />• Printable reports for your accountant<br />• Priority support and early access to new features</p>
+        <p class="muted">Demo billing — connect a payment provider (e.g. Paystack or Flutterwave) to charge real cards.</p>
+      </div>
+    </section>
+
     <!-- SETTINGS -->
     <section id="tab-settings" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-settings">
       <div class="card">
@@ -279,6 +300,11 @@
         <p id="settings-note" class="muted" role="status"></p>
       </div>
       <div class="card">
+        <h3>Danger Zone</h3>
+        <p class="muted">Delete every expense, budget, goal and setting on this device. This cannot be undone.</p>
+        <button id="reset-data" class="btn danger">Reset all data</button>
+      </div>
+      <div class="card">
         <h3>Categories</h3>
         <div id="settings-categories"></div>
         <div class="row">
@@ -294,16 +320,6 @@
           <input id="new-wallet-name" type="text" placeholder="New wallet name" maxlength="40" />
           <input id="new-wallet-icon" type="text" placeholder="Icon (e.g. 👛)" maxlength="4" />
           <button id="add-wallet" class="btn primary">Add</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Data / Export</h3>
-        <div class="row">
-          <button id="export-json" class="btn">Export JSON</button>
-          <button id="export-csv" class="btn">Export CSV</button>
-          <label class="btn" for="import-csv" style="cursor:pointer">Import CSV</label>
-          <input id="import-csv" type="file" accept=".csv,text/csv" class="visually-hidden" />
-          <button id="reset-data" class="btn danger">Reset all data</button>
         </div>
       </div>
       <div class="card">
