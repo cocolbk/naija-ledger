@@ -39,7 +39,8 @@ This initial version implements the PRD MVP scope:
 - **Budgets:** overall monthly budget + per-category limits + combined use, progress bars, 80% warning and 100% exceeded alerts, or track with no budget
 - **Summaries:** daily spending summary, monthly spending summary, basic spending breakdown
 - **Reports (basic):** today vs yesterday, this month vs last month, top categories, last-7-days pattern, category breakdown
-- **Profile / settings:** name, profile type, currency (default ₦), category management, JSON/CSV export, reset data
+- **Profile / settings:** name, profile type, currency (default ₦), category management, wallets, Danger Zone reset
+- **Plans (💎 tab):** Free ₦0, Premium ₦1,000/mo (₦10,000/yr), Business ₦3,000/mo (₦30,000/yr) — prices editable in `plans.json` without rebuilding. Reports, savings, recurring, category budgets, custom categories, alerts and export unlock with paid plans; business profiles and business reports need Business. Paystack checkout built in (test mode clearly labelled until keys + server verification are configured).
 
 Data is stored locally in the browser via `localStorage` under the key `naijaLedger.v2` (money as integer kobo; v1 data auto-migrates on first load). No backend or account needed for the static app.
 

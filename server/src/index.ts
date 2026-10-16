@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { auth } from "./auth.js";
 import { presignedUploadUrl } from "./r2.js";
+import { verifyPaystackReference } from "./paystack.js";
 
 const app = new Hono();
 
@@ -36,6 +37,15 @@ app.post("/api/r2/upload-url", async (c) => {
   } catch (e) {
     return c.json({ error: String((e as Error).message || e) }, 501);
   }
+});
+
+// Verify a Paystack transaction server-side. Never trust frontend success alone.
+app.post("/api/payments/verify", async (c) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) return c.json({ error: "unauthorized" }, 401);
+  const { reference } = await c.req.json().catch(() => ({}));
+  if (!reference || typeof reference !== "string") return c.json({ verified: false, reason: "no_reference" }, 400);
+  return c.json(await verifyPaystackReference(reference));
 });
 
 // Serve the static SPA (project root) when running locally.

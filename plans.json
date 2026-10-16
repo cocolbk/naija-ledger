@@ -1,0 +1,8 @@
+{
+  "currency": "₦",
+  "free": { "monthly": 0, "yearly": 0 },
+  "premium": { "monthly": 1000, "yearly": 10000 },
+  "business": { "monthly": 3000, "yearly": 30000 },
+  "paystackPublicKey": "",
+  "verifyUrl": ""
+}

@@ -39,7 +39,7 @@ jobs:
             const src = fs.readFileSync(path.join('js', f), 'utf8');
             ids.push(...[...src.matchAll(/getElementById\(\"([^\"]+)\"\)/g)].map(m => m[1]));
           }
-          const dynamic = new Set(['ob-next', 'ob-back', 'ob-done', 'ob-monthly', 'ob-error', 'ob-budget-fields', 'prem-upgrade', 'prem-method', 'prem-confirm', 'prem-back', 'prem-cancel', 'prem-error']); // rendered dynamically by renderOnboarding()/renderPremium()
+          const dynamic = new Set(['ob-next', 'ob-back', 'ob-done', 'ob-monthly', 'ob-error', 'ob-budget-fields', 'sub-manage', 'sub-cancel', 'biz-name', 'biz-type', 'biz-save', 're-export-json', 're-export-csv']); // rendered dynamically
           const missing = [...new Set(ids)].filter(id => !dynamic.has(id) && !html.includes('id=\"' + id + '\"'));
           if (missing.length) { console.error('Missing IDs in index.html:', missing.join(', ')); process.exit(1); }
           console.log('All ' + ids.length + ' referenced IDs present.');

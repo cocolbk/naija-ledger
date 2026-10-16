@@ -2,6 +2,7 @@
 import { state, save, PROFILE_TYPES, DEFAULT_CATEGORIES } from "./store.js";
 import { parseAmountToKobo } from "./utils.js";
 import { clearMonthlyBudget } from "./budgets.js";
+import { loadPlansConfig } from "./billing.js";
 import {
   refreshAll, refreshTransactions, clearFilters, showTodayTransactions,
   openExpenseModal, closeExpenseModal, setExpMode, saveExpenseFromModal, deleteExpenseFromModal,
@@ -25,10 +26,12 @@ export function showTab(name) {
   });
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + name));
 }
-document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => {
+document.addEventListener("click", (e) => {
+  const b = e.target.closest ? e.target.closest("[data-goto]") : null;
+  if (!b) return;
   if (b.dataset.filterToday) showTodayTransactions();
   showTab(b.dataset.goto);
-}));
+});
 
 // ---------- Theme ----------
 function applyTheme() {
@@ -187,7 +190,8 @@ document.getElementById("rec-freq").onchange = (e) => {
 };
 
 // ---------- Boot ----------
-function boot() {
+async function boot() {
+  await loadPlansConfig();
   applyTheme();
   refreshAll();
   renderOnboarding();

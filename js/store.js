@@ -25,6 +25,9 @@ export function defaultState() {
     version: 2,
     user: { name: "", profileType: "Personal", currency: "₦", onboarded: false, theme: "auto" },
     premium: null,
+    subscription: null,
+    payments: [],
+    business: null,
     categories: DEFAULT_CATEGORIES.map((c) => ({ ...c, custom: false })),
     expenses: [],
     budgets: { monthlyKobo: null, categories: {} },
@@ -86,6 +89,20 @@ function load() {
       const s = JSON.parse(raw2);
       if (s && s.version === 2) {
         if (!("premium" in s) || s.premium === undefined) s.premium = null;
+        if (!s.subscription) {
+          // Migrate the old single-tier Premium flag to the new subscription model.
+          if (s.premium && s.premium.active) {
+            s.subscription = {
+              plan: "business", cycle: "monthly", status: "active",
+              since: s.premium.since || null, renews: s.premium.renews || null,
+              ref: null, method: s.premium.method || "legacy",
+            };
+          } else {
+            s.subscription = { plan: "free", cycle: "monthly", status: "active", since: null, renews: null, ref: null, method: null };
+          }
+        }
+        if (!Array.isArray(s.payments)) s.payments = [];
+        if (!("business" in s) || s.business === undefined) s.business = null;
         if (!Array.isArray(s.savedFilters)) s.savedFilters = [];
         if (!Array.isArray(s.savings)) s.savings = [];
         if (!Array.isArray(s.contributions)) s.contributions = [];
